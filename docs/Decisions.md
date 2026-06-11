@@ -11,3 +11,13 @@ This is a list of the choices we made while building the car, and why we made th
 **Why.** One battery has to power a few different things, and they do not all want the same voltage. The motor driver needs the full battery voltage. The ESP32, the sensors and the servo all need 5V. A buck converter only gives you one output, so every extra thing you plug in becomes another join in the wiring.
 
 The distribution board has 5V pads and full voltage pads on the same board, so everything has its own place to connect. This made the wiring a lot neater. That mattered more than we thought it would, because most of the electrical problems we had later were loose or bad connections rather than broken parts, and fewer joins means fewer places for a bad connection to hide. It also left us room to add more parts later, which helped when the Raspberry Pi arrived.
+
+---
+
+## 11 June — Three Li-ion cells instead of one LiPo battery
+
+**Decision.** Power the car with three 18650 Li-ion cells in series, which gives about 11.1V, instead of a single LiPo battery.
+
+**Why.** A LiPo can give out current faster, and for a car that is mostly running one motor that is a real advantage, just a small one. What made up our minds was everything around the battery instead of the battery itself. The 18650 cells sit in a holder that bolts straight to the chassis, we can swap out one cell if it goes bad instead of replacing the whole pack, and they are much easier to charge and store between build sessions. LiPo packs need more care when charging and are not something we wanted sitting in a school bag between meetings.
+
+Three cells in series also gave us a good voltage to work with. It is high enough for the motor to have proper torque, and low enough that the distribution board can drop it to 5V without getting hot.

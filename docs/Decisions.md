@@ -31,3 +31,13 @@ Three cells in series also gave us a good voltage to work with. It is high enoug
 **Why.** In the obstacle round everything depends on how fast the car can see a pillar and react to it. Any delay in getting the picture is a delay in the whole system. A ribbon camera plugs straight into the Pi's camera hardware, which is faster and more consistent than a USB webcam.
 
 The other reason was the USB port itself. The ESP32 is already connected over USB, and we did not want the camera and the link to the motor controller sharing the same connection during a run. Putting the camera on the ribbon connector means USB only has one job to do.
+
+---
+
+## 22 June — Switched to the Raspberry Pi 5 and the Pi 5 camera
+
+**Decision.** Move the whole camera system to a Raspberry Pi 5 with a Camera Module 3, instead of the Pi 3 camera setup we started with.
+
+**Why.** We did not really choose this one. We kept running into problems getting the Pi 3 camera to work properly, and after wasting enough time on it we decided it was smarter to change the hardware than to keep fighting it.
+
+Once we had swapped it, the Pi 5 turned out to be better anyway. Checking the colour of every pixel in every frame is hard work for a computer, and the Pi 5 has enough power to keep up so the driving code does not fall behind the camera. The Camera Module 3 also has a wider view, which helps in a way we did not expect. The car can see pillars that are off to the side, so it has more time to work out how to get around them.

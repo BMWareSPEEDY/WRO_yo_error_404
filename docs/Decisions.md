@@ -41,3 +41,13 @@ The other reason was the USB port itself. The ESP32 is already connected over US
 **Why.** We did not really choose this one. We kept running into problems getting the Pi 3 camera to work properly, and after wasting enough time on it we decided it was smarter to change the hardware than to keep fighting it.
 
 Once we had swapped it, the Pi 5 turned out to be better anyway. Checking the colour of every pixel in every frame is hard work for a computer, and the Pi 5 has enough power to keep up so the driving code does not fall behind the camera. The Camera Module 3 also has a wider view, which helps in a way we did not expect. The car can see pillars that are off to the side, so it has more time to work out how to get around them.
+
+---
+
+## 11 July — A USB cable between the Raspberry Pi and the ESP32
+
+**Decision.** Join the two controllers with one USB cable and send commands over serial, instead of using I2C, the GPIO pins, or a wireless connection.
+
+**Why.** We wanted the link between the two boards to be the most boring part of the car. Wireless would have been the most flexible option and also the worst one here. Anything that can drop out in the middle of a run is a risk we did not need, and Bluetooth and Wi-Fi are slow in ways you cannot predict in a hall full of other teams' robots.
+
+USB serial is boring in a good way. One cable carries everything, and when something goes wrong we can open a serial monitor and watch the exact messages going between the two boards. That saved us more debugging time than anything else on this list. It also let us keep the messages simple. They are just lines of text a person can read, so when something is wrong it is usually obvious as soon as you look.

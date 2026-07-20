@@ -29,3 +29,11 @@ Three weeks of running the car on the practice track over and over, which is whe
 Every session went the same way. Run the car, watch where it went wrong, work out whether the problem was mechanical, electrical or in the code, fix it, then run it again. A lot of what we found was not what we expected. Problems that looked like bad code often turned out to be a sensor reading late or a wire coming loose, and problems that looked electrical were sometimes the code reacting to a wall it should have ignored.
 
 The steering took the longest by far. We kept changing the turning angles and the distance at which the car decides to turn, running it, then changing them again, until the turns were tight enough to get round the corner without clipping the wall. There was no way to work those numbers out on paper. The track gave them to us, one run at a time.
+
+---
+
+## 20 July to 1 August — Raspberry Pi camera and operating system
+
+Once the Pi 5 was in, this stretch was about making the camera and the link between the two boards reliable enough to build on.
+
+We tested the camera constantly to check that the video feed kept running instead of freezing or dropping frames partway through, and we worked through the Raspberry Pi 5 operating system setup until the Pi and the ESP32 talked to each other consistently. Being reliable was the whole point here. A camera system that works nine times out of ten is no use, because the tenth run is the one that happens in front of the judges.

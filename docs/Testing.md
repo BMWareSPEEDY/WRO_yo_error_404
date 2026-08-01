@@ -37,3 +37,13 @@ The steering took the longest by far. We kept changing the turning angles and th
 Once the Pi 5 was in, this stretch was about making the camera and the link between the two boards reliable enough to build on.
 
 We tested the camera constantly to check that the video feed kept running instead of freezing or dropping frames partway through, and we worked through the Raspberry Pi 5 operating system setup until the Pi and the ESP32 talked to each other consistently. Being reliable was the whole point here. A camera system that works nine times out of ten is no use, because the tenth run is the one that happens in front of the judges.
+
+---
+
+## 1 August onwards — HSV tuning and detection
+
+Ongoing testing and tuning of the Raspberry Pi code, to make the car's colour detection something we can trust.
+
+Most of this is HSV tuning, which means changing the colour ranges until the red and green pillars and the magenta parking walls show up clearly without the background getting picked up as well. Along with that we have been sorting out the regions of interest, so the car only looks at the part of the picture where pillars actually turn up and ignores the rest, and checking that the video processing keeps up with the driving code instead of falling behind.
+
+This one is still going and will keep going up to the competition. The WRO rules say the real colours on the field can be different from the printed ones, and teams get practice time at the venue for exactly this reason. So the values we have now are a starting point that we will tune again under the lighting on the day.

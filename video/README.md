@@ -14,4 +14,3 @@ This directory tracks the driving test footage for the **ERROR 404** autonomous 
 
 ---
 
-> ℹ️ *The official challenge demonstration videos (minimum 30 seconds of continuous autonomous driving, one video per challenge) will be uploaded and linked here before the documentation deadline, as required by the WRO 2026 rules.*

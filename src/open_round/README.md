@@ -11,10 +11,12 @@ The main autonomous control script responsible for navigation, wall-following al
 
 #### ⚙️ Hardware Requirements
 - **ESP32 Dev Board** (ESP32-DEVKIT-V1)
-- **DC Gear Motor** (Rear Wheel Drive Propulsion)
-- **Servo Motor** (Front Wheel Ackermann Steering)
+- **DC Drive Motor** (Rear Wheel Drive Propulsion)
+- **MG669R Steering Servo** (Front Wheel Ackermann Steering)
+- **L298N Motor Driver** (Switches the drive motor in both directions)
 - **BNO055 IMU** (9-Axis Absolute Orientation Sensor)
 - **HC-SR04 Ultrasonic Sensors** (3x: Front, Left, Right)
+- **Power Distribution Board** (Splits the pack into a regulated 5V branch and the raw motor supply)
 - **Power Supply** (3x Li-ion 18650 Battery Pack / 11.1V Nominal)
 
 #### 🛠️ Software Setup & Installation Instructions
@@ -130,10 +132,12 @@ This folder houses diagnostic scripts used during hardware bring-up and pre-flig
 
   #### ⚙️ Hardware Requirements
   - **ESP32 Dev Board** (ESP32-DEVKIT-V1)
-  - **DC Gear Motor** (Rear Wheel Drive Propulsion)
-  - **Servo Motor** (Front Wheel Ackermann Steering)
+  - **DC Drive Motor** (Rear Wheel Drive Propulsion)
+  - **MG669R Steering Servo** (Front Wheel Ackermann Steering)
+  - **L298N Motor Driver** (Switches the drive motor in both directions)
   - **BNO055 IMU** (9-Axis Absolute Orientation Sensor)
   - **HC-SR04 Ultrasonic Sensors** (3x: Front, Left, Right)
+  - **Power Distribution Board** (Splits the pack into a regulated 5V branch and the raw motor supply)
   - **Power Supply** (3x Li-ion 18650 Battery Pack / 11.1V Nominal)
 
   #### 🛠️ Software Setup & Installation Instructions

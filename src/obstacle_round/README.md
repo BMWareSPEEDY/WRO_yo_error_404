@@ -245,11 +245,13 @@ If the Pi stops sending commands for half a second, the ESP32 stops the motor an
 ### Hardware Requirements
 
 - **ESP32 Dev Board** (ESP32-DEVKIT-V1)
-- **DC Gear Motor** for the rear wheel drive
-- **Servo Motor** for the front steering
+- **DC Drive Motor** for the rear wheel drive
+- **MG669R Steering Servo** for the front steering
+- **L298N Motor Driver** to switch the drive motor in both directions
 - **BNO055 IMU** (9-axis compass)
 - **HC-SR04 Ultrasonic Sensors** (3x: front, left, right)
 - **Push Button** for the start signal
+- **Power Distribution Board** to split the pack into a regulated 5V branch and the raw motor supply
 - **Power Supply** (3x Li-ion 18650 battery pack, 11.1V)
 - **USB Data Cable** to the Raspberry Pi
 
@@ -293,8 +295,9 @@ This is the Raspberry Pi side, and it is where all the driving decisions are mad
 
 ### Hardware Requirements
 
-- **Raspberry Pi 5** with a microSD card
-- **Pi Camera Module 3** connected to the Pi's camera port
+- **Raspberry Pi 5 (4GB)** with a microSD card
+- **Raspberry Pi 5 Active Cooler**, because running the camera and OpenCV together makes the Pi throttle itself if it gets hot
+- **Pi Camera Module 3 (Wide)** connected to the Pi's camera port
 - **ESP32** connected to the Pi by USB (this is the same cable the commands go over)
 - **Monitor or VNC session**, because the script opens a camera preview window
 - **Power Supply** for the Pi that can handle the Pi 5 (a weak supply will cause random reboots during a run)

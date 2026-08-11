@@ -1,4 +1,4 @@
-<img src="./t-photos/team_photo_with_logo.jpg" width="820" alt="Team ERROR 404">
+<img src="./t-photos/team_photo.jpg" width="820" alt="Team ERROR 404">
 
 # ERROR 404 — WRO Future Engineers 2026
 

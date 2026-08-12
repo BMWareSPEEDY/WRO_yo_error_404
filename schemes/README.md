@@ -12,6 +12,12 @@ This directory contains the electrical circuit schematics detailing the power di
 - **[`obstacle_round/schematic.png`](./obstacle_round/schematic.png)**:
   The electrical wiring diagram for the Obstacle Round challenge configuration. The circuit is electrically identical to the Open Round schematic — the only hardware addition is the Raspberry Pi Camera Module 3, which connects through the Pi 5's dedicated CSI ribbon connector and therefore does not appear as GPIO wiring on the diagram.
 
+- **[`esp32_pin_mapping.jpg`](./esp32_pin_mapping.jpg)**:
+  A visual pin map of the ESP32 DevKit V1, colour-coded by subsystem, showing which GPIO each sensor, the servo, the motor driver and the start button connect to. The matching pin table — taken directly from the firmware and authoritative for wiring — is in the [main README](../README.md#esp32-pin-mapping).
+
+- **[`system_block_diagram.jpg`](./system_block_diagram.jpg)**:
+  The architecture at a glance: the power, sensing, control, computer vision and motion blocks, and how data and power flow between them.
+
 ---
 
 ## 🔌 Hardware Bill of Materials (BOM)

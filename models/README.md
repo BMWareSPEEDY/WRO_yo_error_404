@@ -10,16 +10,16 @@ This directory houses the custom 3D-printable STL files engineered to construct 
   A custom-designed mounting bracket engineered to securely house and position three HC-SR04 ultrasonic sensors across the vehicle's perimeter (front, left, and right channels) for reliable wall-following and distance measurement.
 
 - **[`drive_shaft.stl`](./drive_shaft.stl)**:
-  A custom transmission coupler (Ø10 × 27 mm) that bridges the BO gear motor output axle with the carbon fiber drive shaft, ensuring smooth torque transfer to the rear wheels. One end is a double-D socket matching the flats on the motor shaft; the other is a round bore for the carbon fiber rod, with a cross hole for a locking pin. This part took roughly 20 prints across 5 designs to get the tolerances right — the story is in the [main README](../README.md#3d-printed-parts).
+  A custom transmission coupler (Ø10 × 27 mm) that bridges a BO gear motor output shaft with a carbon fiber drive rod, ensuring smooth torque transfer to the rear wheels. **Print two** — one for each output shaft of the dual-shaft motor. One end is a double-D socket matching the flats on the motor shaft; the other is a round bore for the carbon fiber rod, with a cross hole for a grub screw. **Print in PETG at 100% infill**: PLA is rigid but cracks along the print lines under repeated torsional load, and these parts carry all of the drive torque. This part took roughly 20 prints across 5 designs to get the tolerances right — the story is in the [main README](../README.md#3d-printed-parts).
 
   <img src="./renders/drive_shaft.png" width="520" alt="Drive shaft coupler, both ends">
 
 - **[`drive_motor_holder.stl`](./drive_motor_holder.stl)**:
-  A rigid structural bracket designed to lock the BO DC propulsion motors firmly onto the lower chassis plate, minimizing motor vibration and shaft misalignment during operation.
+  A rigid structural bracket designed to lock the dual-shaft BO DC propulsion motor firmly onto the lower chassis deck, minimizing motor vibration and shaft misalignment during operation.
 
   <img src="./renders/drive_motor_holder.png" width="200" alt="Drive motor holder">
 
-- **Chassis plates** — the two structural levels of the vehicle, held apart by spacers.
+- **Chassis decks** — the two structural levels of the vehicle, held apart by spacers. These two files are models of the decks rather than parts to print: the lower deck is an off-the-shelf metallic frame and the upper deck is cut from acrylic. They are here so that anyone rebuilding the vehicle has the exact hole positions and dimensions to work from.
 
   - **[`Chassis_bottom_view.stl`](./Chassis_bottom_view.stl)** (269.5 × 120 × 5 mm):
     The primary base plate housing the drivetrain assembly, steering mechanism, and lower structural mounts for vehicle stability.

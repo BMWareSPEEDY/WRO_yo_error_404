@@ -92,6 +92,7 @@ We kept two engineering documents while building the car, and they are the hones
 
 - **[`docs/Decisions.md`](./docs/Decisions.md)** — every significant choice we made, in the order we made it, with the reasoning behind it. A couple of them we got wrong the first time and had to change later, and we left those in.
 - **[`docs/Testing.md`](./docs/Testing.md)** — the testing log: what we tried, what broke, and what the fix was.
+- **[`docs/Engineering_Journal.docx`](./docs/Engineering_Journal.docx)** — the full engineering journal submitted for the competition, covering the whole design, build and testing process with the measurements and test data behind each decision.
 
 The short version of the process: decide what the car has to do, pick components that each have one job, design the mechanical parts around those components, get every subsystem working on its own with a small test program, and only then put the full program on top. Most of the time we lost was lost when we skipped that last step and tried to debug the whole car at once.
 
@@ -102,12 +103,12 @@ The short version of the process: decide what the car has to do, pick components
 | Directory | What is inside |
 |:----------|:---------------|
 | [`src/`](./src/) | All of our source code, split into `open_round/` and `obstacle_round/`. `open_round/` has the single ESP32 sketch that runs the wall following routine; `obstacle_round/` has the ESP32 sensor and motor firmware together with the Raspberry Pi vision and navigation program. Each round also keeps the small test programs we wrote while getting the hardware working in a `testing_calibration_codes/` folder. |
-| [`models/`](./models/) | The STL files for every part we 3D printed, including the chassis plates, the sensor mounts and the camera mount, saved as STL so they can go straight into a slicer. Rendered previews are in [`models/renders/`](./models/renders/). |
+| [`models/`](./models/) | The mechanical design files, as STL: the printed parts (drive shafts, motor holder, sensor mounts, camera mount) ready to go straight into a slicer, plus models of the two chassis decks. Rendered previews are in [`models/renders/`](./models/renders/). |
 | [`schemes/`](./schemes/) | The electrical schematics, one for each round, showing how every component is wired, plus the ESP32 pin mapping and the system block diagram. |
 | [`t-photos/`](./t-photos/) | Photos of the team, and our logo. |
 | [`v-photos/`](./v-photos/) | Photos of the finished vehicle from the front, the rear, both sides and the top. These are meant to be used as a construction reference, so you can see how components are actually positioned and routed rather than working from the schematic alone. |
 | [`video/`](./video/) | Links to our driving test footage. |
-| [`docs/`](./docs/) | Engineering documentation: the decision log, the testing log and the images used in this README. |
+| [`docs/`](./docs/) | Engineering documentation: the full engineering journal, the decision log, the testing log and the images used in this README. |
 
 ---
 
@@ -119,8 +120,8 @@ The car is built in two levels, and the reason for that is space rather than sty
 
 | Plate | Size | What it carries |
 |:------|:-----|:----------------|
-| [`Chassis_bottom_view.stl`](./models/Chassis_bottom_view.stl) | 269.5 × 120 × 5 mm | Drive motors and motor holder, the Ackermann steering linkage and the steering servo, the ESP32, the L298N motor driver and the power distribution board |
-| [`Chassis_top_view.stl`](./models/Chassis_top_view.stl) | 199.5 × 120 × 5 mm | Raspberry Pi 5 and its active cooler, the battery cells, and the camera mount at the front |
+| Lower deck — [`Chassis_bottom_view.stl`](./models/Chassis_bottom_view.stl) | 269.5 × 120 × 5 mm | Drive motor and motor holder, the Ackermann steering linkage and the steering servo, the ESP32 and the L298N motor driver |
+| Upper deck — [`Chassis_top_view.stl`](./models/Chassis_top_view.stl) | 199.5 × 120 × 5 mm | Raspberry Pi 5 and its active cooler, the battery cells, the power distribution board and the camera mount at the front |
 
 <p align="center">
   <img src="./models/renders/chassis_bottom.png" width="430" alt="Lower chassis plate">
@@ -130,27 +131,31 @@ The car is built in two levels, and the reason for that is space rather than sty
 
 <p align="center"><i>Lower plate (left) and upper plate (right), rendered from the STL files in <code>models/</code>.</i></p>
 
-The two plates are held apart by spacers, which gives us a wiring gap between the levels instead of a wiring problem. The plates are drilled with far more holes and slots than we use, deliberately, because during the build the position of almost everything moved at least once and we did not want to reprint a 270 mm plate every time something shifted by 5 mm.
+The lower deck is an off-the-shelf metallic frame, originally sold for four-wheeled robot kits. We kept it because a metal base does not flex or crack under load, and a chassis that flexes quietly ruins steering geometry that you then spend a weekend trying to debug in software. Its one drawback is footprint — it is a large frame, which is exactly why the second level exists.
+
+The upper deck is our own design, cut from acrylic. Moving the Raspberry Pi, the camera mount and the power distribution board upstairs is what let a 285 mm long vehicle fit inside the 300 × 200 × 300 mm starting envelope: we bought vertical space, which we had plenty of, to spend less horizontal space, which we did not.
+
+The two decks are held apart by spacers, which gives us a wiring gap between the levels instead of a wiring problem. Both are drilled with far more holes and slots than we use, deliberately, because during the build the position of almost everything moved at least once.
 
 ### Assembly Instructions
 
-Everything below bolts onto the two printed plates. Build the lower plate completely before you add the spacers, because once the upper plate is on you cannot reach the steering linkage.
+Everything below bolts onto the two decks. Build the lower deck completely before you add the spacers, because once the upper deck is on you cannot reach the steering linkage.
 
-**1. Print the parts.** All the STLs are in [`models/`](./models/): both chassis plates, the drive motor holder, two drive shaft couplers, the three ultrasonic sensor mounts and the three-piece camera mount.
+**1. Print the parts.** All the STLs are in [`models/`](./models/): the drive motor holder, two drive shaft couplers, the three ultrasonic sensor mounts and the three-piece camera mount. Print the drive shafts in **PETG at 100% infill** — this matters, and the reason is under [3D Printed Parts](#3d-printed-parts).
 
-**2. Mount the drive motors.** The drive motor holder goes at the **rear of the lower plate**. The BO DC gear motors clamp into the barrels of the holder, facing outwards towards the rear wheels.
+**2. Mount the drive motor.** The drive motor holder goes at the **rear of the lower deck**. The BO DC gear motor is a **dual-shaft** motor — one body with an output shaft coming out of each side — and it clamps into the holder across the width of the car, so that a shaft points at each rear wheel.
 
-**3. Fit the drive shafts.** Each printed drive shaft coupler pushes onto the double-D output shaft of a BO motor. A length of carbon fibre rod, cut to size, slots into the other end of the coupler and carries the drive out to the rear wheel. This is the part that took the most attempts to get right — see [3D Printed Parts](#3d-printed-parts).
+**3. Fit the drive shafts.** A printed drive shaft coupler pushes onto each of the motor's two output shafts, matching the flats on the shaft. A length of carbon fibre rod, cut to size, slots into the other end of each coupler and carries the drive out to that rear wheel, held by a grub screw. Driving both rear wheels from one motor this way is what lets us avoid a differential entirely. This is the part that took the most attempts to get right — see [3D Printed Parts](#3d-printed-parts).
 
-**4. Build the steering.** The Ackermann steering linkage and the MG669R steering servo go at the **front of the lower plate**. Centre the servo at 90° before you connect the linkage, otherwise the mechanical straight-ahead and the software straight-ahead will not be the same thing.
+**4. Build the steering.** The Ackermann steering linkage and the MG669R steering servo go at the **front of the lower deck**. Centre the servo at 90° before you connect the linkage, otherwise the mechanical straight-ahead and the software straight-ahead will not be the same thing.
 
-**5. Mount the lower-level electronics.** The ESP32, the L298N motor driver and the power distribution board all sit on the lower plate, near the middle so the wiring to the front and rear is symmetric.
+**5. Mount the lower-level electronics.** The ESP32 and the L298N motor driver sit on the lower deck, near the middle so the wiring to the front and rear is symmetric.
 
-**6. Add the spacers and the upper plate.** The spacers set the gap between the two levels. Run the wiring up through that gap before the top plate goes on.
+**6. Add the spacers and the upper deck.** The spacers set the gap between the two levels. Run the wiring up through that gap before the top deck goes on.
 
-**7. Mount the Raspberry Pi and the batteries.** The Raspberry Pi 5 with its active cooler and the Li-ion cell holder go on the upper plate.
+**7. Mount the Raspberry Pi and the batteries.** The Raspberry Pi 5 with its active cooler, the power distribution board and the Li-ion cell holders go on the upper deck.
 
-**8. Mount the camera.** The three-piece camera mount bolts to the front of the upper plate. The camera board sandwiches between the main housing and the 3 mm backing plate, and the mounting arm sets the angle. Point the camera **slightly downwards** — it needs to see the base of the pillars on the mat, not the ceiling of the venue.
+**8. Mount the camera.** The three-piece camera mount bolts to the front of the upper deck. The camera board sandwiches between the main housing and the 3 mm backing plate, and the mounting arm sets the angle. Point the camera **slightly downwards** — it needs to see the base of the pillars on the mat, not the ceiling of the venue.
 
 **9. Mount the ultrasonic sensors.** Three printed mounts, one at the front and one on each side, each holding an HC-SR04 flat against the direction it is measuring.
 
@@ -158,7 +163,9 @@ Everything below bolts onto the two printed plates. Build the lower plate comple
 
 ### Drive Motor and Transmission
 
-Rear wheel drive, through BO DC gear motors clamped into the printed holder at the back of the lower plate. Power goes through the L298N driver, which takes the low-power direction signals from the ESP32 and switches the current the motors actually need, in both directions.
+Rear wheel drive from a **single dual-shaft 100 RPM BO DC gear motor**, running off the 12 V rail and clamped into the printed holder at the back of the lower deck. A shaft comes out of each side of the motor body, so one motor drives both rear wheels through the printed couplers and carbon fibre rods. Power goes through the L298N driver, which takes the low-power direction signals from the ESP32 and switches the current the motor actually needs, in both directions.
+
+**Why 100 RPM and not something faster.** A quicker motor makes a faster lap and a worse robot. Speed is bounded by how fast the car can *see*, not by how fast it can move: at 30 frames per second, a vehicle doing 1.2 m/s covers 3 cm between frames, so a pillar spotted at 30 cm gives the vision pipeline about seven frames to detect it, decide and steer. At 100 RPM the car does roughly 0.4 m/s, which turns those seven frames into more than twenty. We tried it the fast way first; the slower motor is what took obstacle avoidance from failing regularly to succeeding in 86% of test laps.
 
 <p align="center">
   <img src="./models/renders/drive_motor_holder.png" width="240" alt="Drive motor holder">
@@ -208,9 +215,9 @@ Every mechanical part on this car was designed by us and printed. The full inven
   <img src="./models/renders/drive_shaft.png" width="700" alt="Drive shaft coupler, both ends">
 </p>
 
-<p align="center"><i>The same part from both ends. Left: the round bore that takes the carbon fibre rod. Right: the double-D socket that fits the BO motor's output shaft. The cross hole takes a locking pin.</i></p>
+<p align="center"><i>The same part from both ends. Left: the round bore that takes the carbon fibre rod. Right: the double-D socket that fits the BO motor's output shaft. The cross hole takes the grub screw.</i></p>
 
-It is a 10 mm diameter, 27 mm long sleeve, and it is the single component that all of the drive torque passes through. One end has a double-D socket that matches the flats on the BO motor's output shaft. The other end has a round bore that takes the sawn carbon fibre rod running out to the wheel. A cross hole through the wall takes a pin to stop the rod pulling out.
+It is a 10 mm diameter, 27 mm long sleeve, and there are two of them — one on each of the motor's output shafts. Every bit of drive torque in the vehicle passes through them. One end has a double-D socket that matches the flats on the motor shaft. The other end has a round bore that takes the sawn carbon fibre rod running out to the wheel, held by a grub screw through the wall.
 
 **It took about 20 prints across 5 different designs.** The reason is that both ends are interference fits into parts we did not manufacture, so the tolerances had to be exact and there was no adjusting them afterwards:
 
@@ -247,7 +254,7 @@ flowchart LR
     SW3 --> PDB[Power Distribution Board<br/>12V to 5V]
 
     PDB -->|raw pack voltage| L298[L298N Motor Driver]
-    L298 --> MOT[BO DC Drive Motors]
+    L298 --> MOT[BO DC Drive Motor<br/>dual-shaft, 100 RPM]
 
     PDB -->|regulated 5V| ESP[ESP32]
     PDB -->|regulated 5V| SENS[3x HC-SR04]
@@ -279,7 +286,7 @@ What the button does depends on the round:
 | Controller | Role |
 |:-----------|:-----|
 | **ESP32 Dev Board** | Real-time hardware control. Reads the three ultrasonics and the IMU, generates the servo and motor PWM. In the open round it also makes every decision; in the obstacle round it makes none. |
-| **Raspberry Pi 5 (4GB)** | Obstacle round only. Runs the camera and the vision code, and makes every driving decision. |
+| **Raspberry Pi 5 (8GB)** | Obstacle round only. Runs the camera and the vision code, and makes every driving decision. |
 
 ### ESP32 Pin Mapping
 
@@ -308,6 +315,8 @@ The table below is taken directly from the firmware in [`src/`](./src/) and is t
 **Ultrasonic sensors (×3).** Mounted at the front and on both sides. They measure how far away the walls are, which is what the vehicle uses to stay centred in the lane and to recognise that it has arrived at a corner.
 
 **BNO055 IMU.** A 9-axis absolute orientation sensor, which gives us a real heading rather than a raw gyro rate. Small steering errors and wheel slip would otherwise build up over three laps until the vehicle is driving at an angle, so the heading from the IMU is used to correct that drift continuously and to confirm that each 90 degree turn has actually finished.
+
+Where it sits took a round of debugging. We first mounted it on top of the steering servo, which is a convenient flat surface and a terrible idea: the metal in the servo interferes with a magnetometer, and a 9-axis sensor that is quietly being lied to by its own compass produces a heading that looks plausible and is wrong. It now lives towards the back of the vehicle, away from the servo and the motor.
 
 Every sensor except the camera is wired to the ESP32, in both rounds. What changes between rounds is who reads the ESP32.
 
@@ -358,11 +367,12 @@ Before building anything, we decided on our hardware requirements and our bill o
 | Component | What it does |
 |:----------|:-------------|
 | **ESP32 Dev Board** | The only controller in this round. It does all of the processing and drives every sensor, the servo and the motor. |
-| **BO DC Gear Motors** | Rear wheel drive, controlled through the L298N driver. |
+| **BO DC Gear Motor** | Dual-shaft, 100 RPM, 12V. Drives both rear wheels through the printed couplers and carbon fibre rods, controlled through the L298N driver. |
+| **Carbon Fibre Rods (×2)** | Rear axles, one per wheel, running from the printed couplers out to the rear wheels. |
 | **MG669R Steering Servo** | Front wheel steering. A high torque servo is worth using here, because the steering has to hold its angle while the vehicle is moving. |
 | **Ultrasonic Sensors (×3)** | Mounted at the front, the left and the right to measure the distance to the walls on each side. |
 | **BNO055 IMU** | A 9-axis absolute orientation sensor. It gives us a real heading rather than a raw gyro rate, so the vehicle can hold a straight line and know when it has actually completed a 90 degree turn. |
-| **L298N Motor Driver** | Takes the low power signals from the ESP32 and switches the current the drive motors need, in both directions. |
+| **L298N Motor Driver** | Takes the low power signals from the ESP32 and switches the current the drive motor needs, in both directions. |
 | **Power Distribution Board** | Splits the battery power into separate branches, so the electronics get a regulated 5V supply and the motor gets the raw pack voltage. |
 | **Li-ion Cells (×3)** | The main pack. Three 18650 cells in series power the whole vehicle, at about 11.1V nominal. |
 | **Li-ion Cells (×2)** | The servo pack. Two cells in series, 7.4V, powering the steering servo and nothing else. |
@@ -376,7 +386,7 @@ Everything from the open round, plus:
 
 | Component | What it does |
 |:----------|:-------------|
-| **Raspberry Pi 5 (4GB)** | The brain and the master controller. It runs the vision system and makes every driving decision. |
+| **Raspberry Pi 5 (8GB)** | The brain and the master controller. It runs the vision system and makes every driving decision. |
 | **Raspberry Pi 5 Active Cooler** | Keeps the Pi from overheating. Running the camera and OpenCV together pushes the processor hard, and a hot Pi throttles itself and slows the whole loop down. |
 | **Raspberry Pi Camera Module 3 (Wide)** | The vision input, mounted at the front on a 3D printed mount. The wide lens matters because it lets the vehicle see traffic signs that are off to the side. |
 

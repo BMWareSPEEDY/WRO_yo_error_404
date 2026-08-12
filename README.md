@@ -4,29 +4,51 @@
 
 GitHub repository and vehicle design for Team ERROR 404.
 
+This is the whole story of our car: what we built, why we built it that way, what we got wrong on the first try, and everything anyone would need to build it again from scratch.
+
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Repository Structure](#repository-structure)
-- [Key Features](#key-features)
-- [Key Folders](#key-folders)
-- [Meet the Team](#meet-the-team)
-- [Hardware](#hardware)
-  - [Open Challenge Round](#open-challenge-round)
-  - [Obstacle Challenge Round](#obstacle-challenge-round)
-- [Mobility System](#mobility-system)
-- [Power System](#power-system)
-- [Sensor Integration](#sensor-integration)
-- [Software](#software)
-  - [Development Environment](#development-environment)
-  - [Libraries and Dependencies](#libraries-and-dependencies)
-  - [Open Round: How the Code Works](#open-round-how-the-code-works)
-  - [Obstacle Round: How the Code Works](#obstacle-round-how-the-code-works)
-  - [Failure Handling](#failure-handling)
-  - [Getting the Code Running](#getting-the-code-running)
-  - [Tuning and Testing Tools](#tuning-and-testing-tools)
+1. [Overview](#overview)
+2. [Meet the Team](#meet-the-team)
+3. [Design Process](#design-process)
+4. [Repository Structure](#repository-structure)
+5. [Mobility Management](#mobility-management)
+   - [Chassis](#chassis)
+   - [Assembly Instructions](#assembly-instructions)
+   - [Drive Motor and Transmission](#drive-motor-and-transmission)
+   - [Steering Mechanism](#steering-mechanism)
+   - [Wheels](#wheels)
+   - [3D Printed Parts](#3d-printed-parts)
+6. [Power and Sense Management](#power-and-sense-management)
+   - [Power Supply](#power-supply)
+   - [Switches and Starting a Run](#switches-and-starting-a-run)
+   - [Controllers](#controllers)
+   - [ESP32 Pin Mapping](#esp32-pin-mapping)
+   - [Sensors](#sensors)
+   - [Camera](#camera)
+   - [Schematics](#schematics)
+   - [Components List](#components-list)
+7. [Engineering Trade-offs](#engineering-trade-offs)
+   - [Ackermann Steering vs. Differential Steering](#ackermann-steering-vs-differential-steering)
+   - [Funduino Wheels](#funduino-wheels)
+   - [Ultrasonic Sensor Placement](#ultrasonic-sensor-placement)
+   - [Li-ion Cells vs. a LiPo Pack](#li-ion-cells-vs-a-lipo-pack)
+   - [Two Controllers vs. One](#two-controllers-vs-one)
+8. [Software](#software)
+   - [Software Building Blocks](#software-building-blocks)
+   - [Development Environment](#development-environment)
+   - [Programming Languages](#programming-languages)
+   - [Libraries and Dependencies](#libraries-and-dependencies)
+   - [Open Round: How the Code Works](#open-round-how-the-code-works)
+   - [Obstacle Round: How the Code Works](#obstacle-round-how-the-code-works)
+   - [Failure Handling](#failure-handling)
+   - [Getting the Code Running](#getting-the-code-running)
+   - [Tuning and Testing Tools](#tuning-and-testing-tools)
+9. [Vehicle Photos](#vehicle-photos)
+10. [Demonstration Videos](#demonstration-videos)
+11. [Resources and Acknowledgements](#resources-and-acknowledgements)
 
 ---
 
@@ -38,41 +60,13 @@ This repository holds the hardware, the software and all the supporting material
 
 **Obstacle Challenge Round.** The vehicle switches to a two controller setup, where the Raspberry Pi is the master and the ESP32 is the slave. The ESP32 stops making decisions and becomes a sensor board: it reads everything and passes it up to the Pi. The Pi is the brain, combining that sensor data with the live camera feed to decide where the vehicle should go, then sending speed and steering commands back down.
 
----
-
-## Repository Structure
-
-| Directory | What is inside |
-|:----------|:---------------|
-| [`src/`](./src/) | All of our source code, split into `open_round/` and `obstacle_round/`. Each round also keeps the small test programs we wrote while getting the hardware working. |
-| [`models/`](./models/) | The STL files for every part we 3D printed, including the chassis plates, the sensor mounts and the camera mount. |
-| [`schemes/`](./schemes/) | The electrical schematics, one for each round, showing how every component is wired. |
-| [`t-photos/`](./t-photos/) | Photos of the team, and our logo. |
-| [`v-photos/`](./v-photos/) | Photos of the finished vehicle from the front, the rear, both sides and the top. |
-| [`video/`](./video/) | Links to our driving test footage. |
-| [`docs/`](./docs/) | Engineering documentation for the build. |
-
----
-
-## Key Features
+Three things we tried to get right in this repository:
 
 **Full documentation of both the hardware and the software.** Every component, every wire and every part of the code is written up, so anyone reading this repository can understand how the vehicle works and rebuild it themselves rather than guessing at our design.
 
 **3D models included.** All of our printed parts are in the repository as STL files, so you can rebuild the same vehicle without having to design anything yourself in Fusion 360, Tinkercad or SolidWorks.
 
 **Built for the competition.** The code and the schematics cover both the Open Round and the Obstacle Round, and both are set up for the WRO Future Engineers rules rather than being a general robotics demo.
-
----
-
-## Key Folders
-
-**[`src/`](./src/)** — The complete source code. `open_round/` has the single ESP32 sketch that runs the wall following routine. `obstacle_round/` has the ESP32 sensor and motor firmware together with the Raspberry Pi vision and navigation program. Both rounds also include a `testing_calibration_codes/` folder with the smaller programs we used to check the hardware before running the full code.
-
-**[`models/`](./models/)** — Every 3D printed part on the vehicle, saved as STL so it can go straight into a slicer.
-
-**[`schemes/`](./schemes/)** — The wiring diagrams. There is one schematic per round, because the obstacle round adds the Raspberry Pi and the camera on top of the open round electronics.
-
-**[`v-photos/`](./v-photos/)** — Photographs of the finished vehicle from every angle. These are meant to be used as a construction reference, so you can see how components are actually positioned and routed rather than working from the schematic alone.
 
 ---
 
@@ -92,86 +86,226 @@ We come from two different schools, The International School Bangalore and Natio
 
 ---
 
-## Hardware
+## Design Process
 
-Before building anything, we decided on our hardware requirements and our bill of materials. Every component on this list is there to do a specific job, and each choice had a reason behind it rather than being whatever we had lying around.
+We kept two engineering documents while building the car, and they are the honest version of how this went rather than the tidy version.
 
-### Open Challenge Round
+- **[`docs/Decisions.md`](./docs/Decisions.md)** — every significant choice we made, in the order we made it, with the reasoning behind it. A couple of them we got wrong the first time and had to change later, and we left those in.
+- **[`docs/Testing.md`](./docs/Testing.md)** — the testing log: what we tried, what broke, and what the fix was.
 
-| Component | What it does |
-|:----------|:-------------|
-| **ESP32 Dev Board** | The only controller in this round. It does all of the processing and drives every sensor, the servo and the motor. |
-| **DC Drive Motor** | Rear wheel drive, controlled through the L298N driver. |
-| **MG669R Steering Servo** | Front wheel steering. A high torque servo is worth using here, because the steering has to hold its angle while the vehicle is moving. |
-| **Ultrasonic Sensors (x3)** | Mounted at the front, the left and the right to measure the distance to the walls on each side. |
-| **BNO055 IMU** | A 9-axis absolute orientation sensor. It gives us a real heading rather than a raw gyro rate, so the vehicle can hold a straight line and know when it has actually completed a 90 degree turn. |
-| **L298N Motor Driver** | Takes the low power signals from the ESP32 and switches the current the drive motor needs, in both directions. |
-| **Power Distribution Board** | Splits the battery power into separate branches, so the electronics get a regulated 5V supply and the motor gets the raw pack voltage. |
-| **Li-ion Batteries (x3)** | Three cells in series power the whole vehicle, at about 11.1V nominal. |
-
-### Obstacle Challenge Round
-
-| Component | What it does |
-|:----------|:-------------|
-| **Raspberry Pi 5 (4GB)** | The brain and the master controller. It runs the vision system and makes every driving decision. |
-| **Raspberry Pi 5 Active Cooler** | Keeps the Pi from overheating. Running the camera and OpenCV together pushes the processor hard, and a hot Pi throttles itself and slows the whole loop down. |
-| **ESP32 Dev Board** | The slave controller. In this round it only reads the sensors and drives the motor and servo, taking its orders from the Pi. |
-| **Raspberry Pi Camera Module 3 (Wide)** | The vision input, mounted at the front on a 3D printed mount. The wide lens matters because it lets the vehicle see traffic signs that are off to the side. |
-| **DC Drive Motor** | Rear wheel drive, same as the open round. |
-| **MG669R Steering Servo** | Front wheel steering, same as the open round. |
-| **Ultrasonic Sensors (x3)** | Wall distance measurement at the front, left and right. |
-| **BNO055 IMU** | Orientation and heading, read by the ESP32 and passed up to the Pi. |
-| **L298N Motor Driver** | Drives the rear motor. |
-| **Power Distribution Board** | Branches the battery power out to the different systems, with regulated 5V on some pads and the raw pack voltage on others. |
-| **Li-ion Batteries (x3)** | Power for the whole system, including the Pi. |
+The short version of the process: decide what the car has to do, pick components that each have one job, design the mechanical parts around those components, get every subsystem working on its own with a small test program, and only then put the full program on top. Most of the time we lost was lost when we skipped that last step and tried to debug the whole car at once.
 
 ---
 
-## Mobility System
+## Repository Structure
 
-**Steering.** The two front wheels are steered by a high torque MG669R servo through a steering linkage.
+| Directory | What is inside |
+|:----------|:---------------|
+| [`src/`](./src/) | All of our source code, split into `open_round/` and `obstacle_round/`. `open_round/` has the single ESP32 sketch that runs the wall following routine; `obstacle_round/` has the ESP32 sensor and motor firmware together with the Raspberry Pi vision and navigation program. Each round also keeps the small test programs we wrote while getting the hardware working in a `testing_calibration_codes/` folder. |
+| [`models/`](./models/) | The STL files for every part we 3D printed, including the chassis plates, the sensor mounts and the camera mount, saved as STL so they can go straight into a slicer. Rendered previews are in [`models/renders/`](./models/renders/). |
+| [`schemes/`](./schemes/) | The electrical schematics, one for each round, showing how every component is wired, plus the ESP32 pin mapping and the system block diagram. |
+| [`t-photos/`](./t-photos/) | Photos of the team, and our logo. |
+| [`v-photos/`](./v-photos/) | Photos of the finished vehicle from the front, the rear, both sides and the top. These are meant to be used as a construction reference, so you can see how components are actually positioned and routed rather than working from the schematic alone. |
+| [`video/`](./video/) | Links to our driving test footage. |
+| [`docs/`](./docs/) | Engineering documentation: the decision log, the testing log and the images used in this README. |
 
-**Drive.** A DC motor drives the two rear wheels, so steering and power are handled separately and neither has to compromise for the other.
+---
+
+## Mobility Management
+
+### Chassis
+
+The car is built in two levels, and the reason for that is space rather than style. Everything mechanical is loud, hot or moving, and everything computational is fragile, so we separated them.
+
+| Plate | Size | What it carries |
+|:------|:-----|:----------------|
+| [`Chassis_bottom_view.stl`](./models/Chassis_bottom_view.stl) | 269.5 × 120 × 5 mm | Drive motors and motor holder, the Ackermann steering linkage and the steering servo, the ESP32, the L298N motor driver and the power distribution board |
+| [`Chassis_top_view.stl`](./models/Chassis_top_view.stl) | 199.5 × 120 × 5 mm | Raspberry Pi 5 and its active cooler, the battery cells, and the camera mount at the front |
+
+<p align="center">
+  <img src="./models/renders/chassis_bottom.png" width="430" alt="Lower chassis plate">
+  &nbsp;&nbsp;
+  <img src="./models/renders/chassis_top.png" width="360" alt="Upper chassis plate">
+</p>
+
+<p align="center"><i>Lower plate (left) and upper plate (right), rendered from the STL files in <code>models/</code>.</i></p>
+
+The two plates are held apart by spacers, which gives us a wiring gap between the levels instead of a wiring problem. The plates are drilled with far more holes and slots than we use, deliberately, because during the build the position of almost everything moved at least once and we did not want to reprint a 270 mm plate every time something shifted by 5 mm.
+
+### Assembly Instructions
+
+Everything below bolts onto the two printed plates. Build the lower plate completely before you add the spacers, because once the upper plate is on you cannot reach the steering linkage.
+
+**1. Print the parts.** All the STLs are in [`models/`](./models/): both chassis plates, the drive motor holder, two drive shaft couplers, the three ultrasonic sensor mounts and the three-piece camera mount.
+
+**2. Mount the drive motors.** The drive motor holder goes at the **rear of the lower plate**. The BO DC gear motors clamp into the barrels of the holder, facing outwards towards the rear wheels.
+
+**3. Fit the drive shafts.** Each printed drive shaft coupler pushes onto the double-D output shaft of a BO motor. A length of carbon fibre rod, cut to size, slots into the other end of the coupler and carries the drive out to the rear wheel. This is the part that took the most attempts to get right — see [3D Printed Parts](#3d-printed-parts).
+
+**4. Build the steering.** The Ackermann steering linkage and the MG669R steering servo go at the **front of the lower plate**. Centre the servo at 90° before you connect the linkage, otherwise the mechanical straight-ahead and the software straight-ahead will not be the same thing.
+
+**5. Mount the lower-level electronics.** The ESP32, the L298N motor driver and the power distribution board all sit on the lower plate, near the middle so the wiring to the front and rear is symmetric.
+
+**6. Add the spacers and the upper plate.** The spacers set the gap between the two levels. Run the wiring up through that gap before the top plate goes on.
+
+**7. Mount the Raspberry Pi and the batteries.** The Raspberry Pi 5 with its active cooler and the Li-ion cell holder go on the upper plate.
+
+**8. Mount the camera.** The three-piece camera mount bolts to the front of the upper plate. The camera board sandwiches between the main housing and the 3 mm backing plate, and the mounting arm sets the angle. Point the camera **slightly downwards** — it needs to see the base of the pillars on the mat, not the ceiling of the venue.
+
+**9. Mount the ultrasonic sensors.** Three printed mounts, one at the front and one on each side, each holding an HC-SR04 flat against the direction it is measuring.
+
+**10. Wire it up.** Follow [`schemes/`](./schemes/) and the [pin table](#esp32-pin-mapping) below, then run `Full_Bot_Sensor_and_Motor_Test.ino` before you trust anything.
+
+### Drive Motor and Transmission
+
+Rear wheel drive, through BO DC gear motors clamped into the printed holder at the back of the lower plate. Power goes through the L298N driver, which takes the low-power direction signals from the ESP32 and switches the current the motors actually need, in both directions.
+
+<p align="center">
+  <img src="./models/renders/drive_motor_holder.png" width="240" alt="Drive motor holder">
+</p>
+
+Steering and drive are completely separate systems on this car: the front wheels only steer and the rear wheels only drive. Neither has to compromise for the other, which means the steering geometry could be designed for cornering without worrying about transmitting torque, and the drivetrain could be designed for torque without worrying about turning.
+
+### Steering Mechanism
+
+The two front wheels are steered by a high torque MG669R servo through an **Ackermann steering linkage**. In software the servo runs between 30° (full left) and 150° (full right), with 90° as straight ahead.
+
+<p align="center">
+  <img src="./docs/images/ackermann_geometry.png" width="620" alt="Ackermann steering geometry">
+</p>
+
+<p align="center"><i>Ackermann geometry: the inside wheel turns further than the outside wheel so that both roll around a common centre of turning circle. Diagram by Andy Dingley, after Bromskloss — <a href="https://commons.wikimedia.org/wiki/File:Ackermann_turning.svg">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>.</i></p>
+
+When a car turns, the inside wheel is following a tighter circle than the outside wheel. If both wheels are turned by the same angle, one of them has to scrub sideways across the ground. Ackermann geometry turns the inside wheel further than the outside wheel so that both roll cleanly around the same centre point. For us that meant sharper, more predictable turns and less fighting against our own tyres.
 
 **Turning radius.** We found this by testing rather than by calculating it. We kept adjusting the steering limits and running the vehicle until we found the sharpest turn it could make without the wheels binding or the vehicle scrubbing across the mat.
 
 **Control.** In the open round the ESP32 generates the PWM for both the servo and the motor directly. In the obstacle round the Raspberry Pi decides on a speed and a steering angle and sends them to the ESP32, which then generates the same PWM signals. The mechanical system does not change between rounds, only what is deciding the numbers.
 
-**Design rationale.** We used Ackermann steering, which is the geometry real cars use. When a car turns, the inside wheel is following a tighter circle than the outside wheel, so if both wheels are turned by the same angle one of them has to scrub sideways across the ground. Ackermann geometry turns the inside wheel further than the outside wheel so that both roll cleanly around the same centre point. For us that meant sharper, more predictable turns and less fighting against our own tyres.
+### Wheels
+
+We run **Funduino wheels** — a rubber tyre with a block tread on a plastic rim, the standard hobby robotics wheel of that size. They are on all four corners.
+
+| Advantages | Disadvantages |
+|:-----------|:--------------|
+| More efficient at speed | Low precision |
+| Less friction against the surface | Limited traction on smooth or dirty floors |
+| More power and speed available to manoeuvre | Not durable enough for heavy-duty or industrial use |
+| Excellent climbing ability | |
+| Good at turning in tight spaces | |
+
+The advantages are the ones we actually use: the game is won by getting round a corner quickly and cleanly, and a low-friction wheel that keeps its speed through a turn is worth more to us than a grippy wheel that fights the steering.
+
+The disadvantage that bites is traction on a smooth floor. The WRO mat is smooth, and dust from a competition hall gets onto it, so a wheel that is fine on a workshop floor can slip on the mat. Slip matters more than it sounds: the whole corner strategy assumes the car follows the arc the steering geometry predicts, and a slipping wheel does not. Wiping the tyres before a run is genuinely part of our routine, not a superstition. Durability is not a concern for us — competition runs are minutes long, not hours — so we accepted that trade freely.
+
+### 3D Printed Parts
+
+Every mechanical part on this car was designed by us and printed. The full inventory with descriptions is in [`models/README.md`](./models/README.md).
+
+**The drive shaft coupler was the hard one.**
+
+<p align="center">
+  <img src="./models/renders/drive_shaft.png" width="700" alt="Drive shaft coupler, both ends">
+</p>
+
+<p align="center"><i>The same part from both ends. Left: the round bore that takes the carbon fibre rod. Right: the double-D socket that fits the BO motor's output shaft. The cross hole takes a locking pin.</i></p>
+
+It is a 10 mm diameter, 27 mm long sleeve, and it is the single component that all of the drive torque passes through. One end has a double-D socket that matches the flats on the BO motor's output shaft. The other end has a round bore that takes the sawn carbon fibre rod running out to the wheel. A cross hole through the wall takes a pin to stop the rod pulling out.
+
+**It took about 20 prints across 5 different designs.** The reason is that both ends are interference fits into parts we did not manufacture, so the tolerances had to be exact and there was no adjusting them afterwards:
+
+- **Too tight** and the sleeve splits when you press the rod in, because a printed part is weakest along the layer lines and that is exactly the direction the wall gets pushed.
+- **Too loose** and it holds fine by hand and then slips the moment the motor puts real torque through it, which is a failure that only shows up when the car is driving.
+- The printed hole is never the diameter you asked for. Shrinkage and elephant's foot meant our first designs measured correct in the CAD and were wrong on the print bed, so the final dimensions came from measuring printed test pieces rather than from the datasheet.
+- The double-D socket has to be clocked correctly as well. A round hole only has to be the right size; a D-shaped one has to be the right size **and** the right orientation, or the flats do not engage and the whole thing spins freely on the shaft.
+
+The five designs went from a plain sleeve, through versions with thicker walls and a grub screw, to the final one with the pin hole and wall thickness chosen so it survives the press fit. This is by far the most reprinted part on the car, and it is also the part we would design first if we started again.
 
 ---
 
-## Power System
+## Power and Sense Management
 
-The vehicle runs on three Li-ion cells in series, which gives about 11.1V nominal, or around 12.6V when they are fully charged.
+<p align="center">
+  <img src="./schemes/system_block_diagram.jpg" width="820" alt="System block diagram">
+</p>
 
-That pack feeds a power distribution board, which is what lets one battery pack run everything safely. The board splits the supply into two kinds of output: a regulated 5V branch and a branch carrying the raw pack voltage.
+<p align="center"><i>The five blocks of the vehicle: power, sensing, control, computer vision and motion.</i></p>
 
-The 5V branch runs the ESP32, the sensors, the steering servo and the Raspberry Pi. The raw pack voltage goes to the motor driver, which is the only part that wants the higher voltage.
+### Power Supply
 
-One thing worth knowing if you rebuild this: the Raspberry Pi 5 is fussy about its 5V supply. If the current available drops it will reboot in the middle of a run, which is very hard to diagnose if you assume it is a software problem.
+The vehicle runs on **three 18650 Li-ion cells in series**, which gives about 11.1 V nominal, or around 12.6 V when they are fully charged.
+
+That pack feeds a power distribution board, which is what lets one battery pack run everything safely. The board splits the supply into two kinds of output: a regulated 5 V branch and a branch carrying the raw pack voltage.
+
+The 5 V branch runs the ESP32, the sensors and the Raspberry Pi. The raw pack voltage goes to the motor driver, which is the only part that wants the higher voltage. The **steering servo has its own separate supply** rather than sharing the logic rail, because a servo under load pulls a sharp current spike at exactly the moment the car is turning, and a voltage dip at that moment would reset the very controller that is steering.
+
+One thing worth knowing if you rebuild this: the Raspberry Pi 5 is fussy about its 5 V supply. If the current available drops it will reboot in the middle of a run, which is very hard to diagnose if you assume it is a software problem.
 
 ```mermaid
 flowchart LR
-    BAT[3x Li-ion 18650 cells<br/>11.1V nominal] --> PDB[Power Distribution Board]
+    BAT[3x 18650 Li-ion cells<br/>11.1V nominal] --> SW[Main power switch]
+    SW --> PDB[Power Distribution Board]
 
     PDB -->|raw pack voltage| L298[L298N Motor Driver]
-    L298 --> MOT[DC Drive Motor]
+    L298 --> MOT[BO DC Drive Motors]
 
     PDB -->|regulated 5V| ESP[ESP32]
-    PDB -->|regulated 5V| SRV[MG669R Steering Servo]
     PDB -->|regulated 5V| PI[Raspberry Pi 5<br/>obstacle round only]
+
+    SRVBAT[Separate servo supply] --> SRV[MG669R Steering Servo]
 ```
 
----
+### Switches and Starting a Run
 
-## Sensor Integration
+There are two switches on the car, and they do deliberately different jobs.
 
-**Ultrasonic sensors (x3).** Mounted at the front and on both sides. They measure how far away the walls are, which is what the vehicle uses to stay centred in the lane and to recognise that it has arrived at a corner.
+**The rocker switch turns the vehicle on.** It sits between the battery pack and the power distribution board, so it is a true master switch: everything downstream of it — controllers, sensors, motor driver — is dead until it is flipped. It is mounted where it can be reached without lifting the car, because the one thing you always need in a hurry is the off switch.
 
-**BNO055 IMU.** This gives us real time orientation. Small steering errors and wheel slip would otherwise build up over three laps until the vehicle is driving at an angle, so the heading from the IMU is used to correct that drift continuously and to confirm that each 90 degree turn has actually finished.
+**The push button starts the run.** It is wired to the ESP32 with an internal pull-up and pulls the pin to ground when pressed. Powering the car on does nothing except boot it: the code initialises, centres the servo, starts the IMU, zeroes the heading, and then sits and waits. Nothing moves until the button is pressed.
 
-**Camera (obstacle round only).** An OpenCV compatible Raspberry Pi 5 camera mounted at the front, giving the Raspberry Pi a live video feed. This is what the vehicle uses to find the red and green traffic sign pillars and the magenta parking limiters, none of which an ultrasonic sensor can tell apart.
+Splitting these two jobs matters. It means the car can be switched on, placed on the mat, checked, and lined up while it is fully powered and completely still. If power-on also meant go, every one of those steps would be a race.
+
+What the button does depends on the round:
+
+| Round | What pressing the button does |
+|:------|:------------------------------|
+| **Open** | Starts the ESP32's wall following routine directly. The ESP32 is the only controller, so the button press is the whole start sequence. |
+| **Obstacle** | The ESP32 sends the start signal up to the Raspberry Pi over the serial link. The Pi has already been running and waiting, so the button is what releases it to begin the run. |
+
+### Controllers
+
+| Controller | Role |
+|:-----------|:-----|
+| **ESP32 Dev Board** | Real-time hardware control. Reads the three ultrasonics and the IMU, generates the servo and motor PWM. In the open round it also makes every decision; in the obstacle round it makes none. |
+| **Raspberry Pi 5 (4GB)** | Obstacle round only. Runs the camera and the vision code, and makes every driving decision. |
+
+### ESP32 Pin Mapping
+
+<p align="center">
+  <img src="./schemes/esp32_pin_mapping.jpg" width="820" alt="ESP32 DevKit V1 pin mapping">
+</p>
+
+The table below is taken directly from the firmware in [`src/`](./src/) and is the authoritative wiring reference.
+
+| ESP32 pin | Connected to |
+|:----------|:-------------|
+| `D27` / `D26` | Left ultrasonic — TRIG / ECHO |
+| `D12` / `D14` | Front ultrasonic — TRIG / ECHO |
+| `D33` / `D32` | Right ultrasonic — TRIG / ECHO |
+| `D21` / `D22` | I²C to the BNO055 IMU — SDA / SCL |
+| `D23` | Steering servo PWM |
+| `D18` | L298N direction input 1 (forward) |
+| `D19` | L298N direction input 2 (reverse) |
+| `D5` | Start push button, `INPUT_PULLUP` to GND |
+| `3V3` | BNO055 supply |
+| `VIN` | 5 V in from the power distribution board |
+| `GND` | Common ground for every subsystem |
+
+### Sensors
+
+**Ultrasonic sensors (×3).** Mounted at the front and on both sides. They measure how far away the walls are, which is what the vehicle uses to stay centred in the lane and to recognise that it has arrived at a corner.
+
+**BNO055 IMU.** A 9-axis absolute orientation sensor, which gives us a real heading rather than a raw gyro rate. Small steering errors and wheel slip would otherwise build up over three laps until the vehicle is driving at an angle, so the heading from the IMU is used to correct that drift continuously and to confirm that each 90 degree turn has actually finished.
 
 Every sensor except the camera is wired to the ESP32, in both rounds. What changes between rounds is who reads the ESP32.
 
@@ -189,11 +323,124 @@ flowchart LR
     PI -->|speed and steering| ESP
 ```
 
+### Camera
+
+A Raspberry Pi Camera Module 3 (Wide) on the CSI ribbon connector, mounted at the front of the upper plate on a three-piece printed mount and angled downwards. This is what the vehicle uses to find the red and green traffic sign pillars and the magenta parking limiters, none of which an ultrasonic sensor can tell apart.
+
+Two things about the mounting matter. The **wide lens** lets the car see pillars that are off to the side, which buys it more time to work out how to get around them. The **downward angle** keeps the mat and the base of the pillars in frame instead of the venue's ceiling and lights, which is what keeps the colour thresholds usable in a hall we have never practised in.
+
+### Schematics
+
+One schematic per round, in [`schemes/`](./schemes/), drawn in KiCad 9.0.1. The obstacle round circuit is electrically identical to the open round one — the only hardware addition is the camera, which connects through the Pi's CSI ribbon connector and so does not appear as GPIO wiring.
+
+- [`schemes/open_round/schematic.png`](./schemes/open_round/schematic.png)
+- [`schemes/obstacle_round/schematic.png`](./schemes/obstacle_round/schematic.png)
+
+### Components List
+
+Before building anything, we decided on our hardware requirements and our bill of materials. Every component on this list is there to do a specific job, and each choice had a reason behind it rather than being whatever we had lying around.
+
+#### Open Challenge Round
+
+| Component | What it does |
+|:----------|:-------------|
+| **ESP32 Dev Board** | The only controller in this round. It does all of the processing and drives every sensor, the servo and the motor. |
+| **BO DC Gear Motors** | Rear wheel drive, controlled through the L298N driver. |
+| **MG669R Steering Servo** | Front wheel steering. A high torque servo is worth using here, because the steering has to hold its angle while the vehicle is moving. |
+| **Ultrasonic Sensors (×3)** | Mounted at the front, the left and the right to measure the distance to the walls on each side. |
+| **BNO055 IMU** | A 9-axis absolute orientation sensor. It gives us a real heading rather than a raw gyro rate, so the vehicle can hold a straight line and know when it has actually completed a 90 degree turn. |
+| **L298N Motor Driver** | Takes the low power signals from the ESP32 and switches the current the drive motors need, in both directions. |
+| **Power Distribution Board** | Splits the battery power into separate branches, so the electronics get a regulated 5V supply and the motor gets the raw pack voltage. |
+| **Li-ion Cells (×3)** | Three 18650 cells in series power the whole vehicle, at about 11.1V nominal. |
+| **Rocker Switch** | Master power switch between the battery pack and the distribution board. |
+| **Push Button** | Start button, read by the ESP32. |
+| **Funduino Wheels (×4)** | Rubber tyre on a plastic rim. |
+
+#### Obstacle Challenge Round
+
+Everything from the open round, plus:
+
+| Component | What it does |
+|:----------|:-------------|
+| **Raspberry Pi 5 (4GB)** | The brain and the master controller. It runs the vision system and makes every driving decision. |
+| **Raspberry Pi 5 Active Cooler** | Keeps the Pi from overheating. Running the camera and OpenCV together pushes the processor hard, and a hot Pi throttles itself and slows the whole loop down. |
+| **Raspberry Pi Camera Module 3 (Wide)** | The vision input, mounted at the front on a 3D printed mount. The wide lens matters because it lets the vehicle see traffic signs that are off to the side. |
+
+In this round the ESP32 becomes the slave controller: it only reads the sensors and drives the motor and servo, taking its orders from the Pi.
+
+---
+
+## Engineering Trade-offs
+
+Every one of these is a choice where the option we did not take was a genuinely reasonable option. This section is what we gave up, not just what we gained.
+
+### Ackermann Steering vs. Differential Steering
+
+We could have skipped steering entirely and turned the car by driving the left and right wheels at different speeds, which is what most first robots do. We chose a steered front axle with Ackermann geometry instead.
+
+| What we gained | What it cost us |
+|:---------------|:----------------|
+| **Faster corners.** Both front wheels roll around a common centre instead of one of them scrubbing sideways, so the car carries speed through a turn instead of scrubbing it off. | **It cannot turn on the spot.** There is a minimum turning radius set by the geometry, and no amount of code changes it. This is exactly why the corner routine reverses first to make room, and why a recovery from a bad angle takes a reverse manoeuvre instead of a spin. |
+| **Less load on the drivetrain.** Energy that would go into dragging a tyre sideways goes into moving the car forward instead. | **Backlash.** Every printed pivot in the linkage has a little play in it, and it all adds up into a steering deadband around centre where small servo movements do nothing. |
+| **Less load on the servo.** The servo moves a linkage rather than fighting a tyre that is being dragged across the mat, so it stalls less and draws less current. | **The geometry has to be right.** The steering arms have to point towards the centre of the rear axle. Get the angle wrong and you have all the mechanical complexity of Ackermann with the tyre scrub of parallel steering. |
+| **Repeatability.** A given servo angle produces the same arc every time, which is what makes an IMU-timed 90° turn land in the same place lap after lap. | **More things to break.** A differential-steer car has two motors and no linkage. Ours has a linkage with pivots, and a pivot that loosens mid-competition is a real risk. |
+
+### Funduino Wheels
+
+Covered in full under [Wheels](#wheels) above. The short version: we traded grip for speed and low rolling resistance, which suits a smooth mat and a course won on corner speed, and we accept that a dusty mat costs us traction and that these wheels would not survive long-term heavy use.
+
+### Ultrasonic Sensor Placement
+
+<p align="center">
+  <img src="./v-photos/vehicle_front.png" width="290" alt="Front view">
+  <img src="./v-photos/vehicle_left_side.png" width="290" alt="Left side view">
+  <img src="./v-photos/vehicle_right_side.png" width="290" alt="Right side view">
+</p>
+
+<p align="center"><i>Front and both sides. The ultrasonic sensors sit low and square-on to the wall they measure; the camera sits high at the front, angled down.</i></p>
+
+**Three sensors, front, left and right, each mounted flat against the direction it measures.**
+
+*Why square-on.* An ultrasonic sensor works by listening for its own echo. A sensor aimed straight at a wall gets a strong, early echo. The same sensor tilted a few degrees gets a weak one, or one that bounces away entirely and never comes back, and a missed echo reads as "the wall is very far away" — which is the single most dangerous wrong answer a wall-following car can be given. So every mount holds its sensor perpendicular to its wall, and the mounts are printed rather than taped for exactly that reason.
+
+*Why the sides are mounted at the middle of the car, not at the nose.* This one we got wrong before we got it right. A side sensor mounted at the front swings sideways when the car steers, so its reading changes when the car turns even if the car has not moved any closer to the wall. Mounted near the middle of the wheelbase, the sensor barely moves when the wheels turn, so distance means distance.
+
+*What it costs us.* A mid-mounted side sensor sees a corner opening up **later** than a nose-mounted one would, because it is physically further back. We compensate in software: the front sensor calls the corner at 65 cm, and the turn routine reverses briefly first to buy back the room the later detection cost us.
+
+*Why only three.* Ultrasonic sensors interfere with each other — one sensor's ping can be heard as another's echo — and each measurement costs real time in the control loop, because you have to wait for the sound to come back. Three sensors is the minimum that answers the two questions the open round asks: *am I centred?* and *has the wall in front arrived?*
+
+*What they cannot do.* The HC-SR04 has a wide beam and no idea what it is looking at, so in the obstacle round it will happily report a traffic-sign pillar as a wall. This is precisely why pillar decisions come from the camera and the ultrasonics are only ever trusted about walls.
+
+### Li-ion Cells vs. a LiPo Pack
+
+The full reasoning is in [`docs/Decisions.md`](./docs/Decisions.md). In short:
+
+| What we gained | What it cost us |
+|:---------------|:----------------|
+| **Packaging.** Three 18650 cells in a holder bolt flat to the plate and use space we already had, rather than a brick that has to be found a home. | **Peak current.** A LiPo can deliver current faster. For a car running one drive channel this rarely matters, but it is a real advantage we gave up. |
+| **Serviceability.** One bad cell can be swapped for one new cell instead of replacing the whole pack. | **Not a weight saving.** We did not choose these to save weight, and with the holder they are not obviously lighter than an equivalent LiPo. |
+| **Easier to live with.** They are simpler to charge and safer to store between build sessions — a LiPo is not something we wanted sitting in a school bag between meetings. | **More connections.** A holder with individual cells has more contact points than a single pack, and contacts are where intermittent faults hide. |
+| **Tidier electronics.** With a fixed cell holder and a distribution board, the wiring has a fixed layout instead of being rearranged every time the battery is swapped. | |
+
+### Two Controllers vs. One
+
+Running the whole obstacle round on the Raspberry Pi alone would have been simpler to write. We split it because the two jobs have incompatible timing requirements: reading an ultrasonic echo and holding a servo pulse need microsecond consistency, and a general purpose operating system running a camera and OpenCV cannot promise that. The ESP32 does the parts that must happen on time, the Pi does the parts that must happen intelligently.
+
+The cost is that we now have a link between them that can fail, which is why both sides have a timeout (see [Failure Handling](#failure-handling)).
+
 ---
 
 ## Software
 
 The two rounds do not share a program, because they do not share a problem. The open round is about staying centred between walls that never move, and one microcontroller is enough for that. The obstacle round adds coloured pillars that have to be passed on a specific side, which needs a camera, and a camera needs a computer. So the software is split into two codebases that happen to drive the same chassis.
+
+### Software Building Blocks
+
+<p align="center">
+  <img src="./docs/images/software_building_blocks.jpg" width="860" alt="Software building blocks">
+</p>
+
+Each side is layered the same way: system and third-party libraries at the bottom, our own reusable functions above them, and the round's main program on top. The only thing crossing between the two stacks is the serial link.
 
 ### Development Environment
 
@@ -203,6 +450,11 @@ The two rounds do not share a program, because they do not share a problem. The 
 | Raspberry Pi (obstacle round) | Python 3 | Any editor, run from the terminal on Raspberry Pi OS 64-bit |
 
 The ESP32 is programmed as an **ESP32 Dev Module** at 115200 baud, which is also the baud rate the two controllers talk to each other on.
+
+### Programming Languages
+
+- **Python** — the Raspberry Pi vision and navigation program, and the HSV tuning tool.
+- **C++ (ESP32)** — both ESP32 sketches, written and flashed with the Arduino IDE.
 
 ### Libraries and Dependencies
 
@@ -291,6 +543,14 @@ flowchart LR
 
 **Seeing the pillars.** Each frame is converted to HSV, because HSV separates "what colour is this" from "how brightly lit is it" far better than RGB does, which matters when the venue lighting is not the lighting we practised in. Separate thresholds pull out red pillars, green pillars and the magenta parking limiters. Contours smaller than our minimum area are thrown away so that specks of noise are not treated as pillars.
 
+<p align="center">
+  <img src="./docs/images/obstacle_detection_overlay.jpg" width="860" alt="Live detection overlay from four frames of a test run">
+</p>
+
+<p align="center"><i>The live annotated feed from a test run. Each frame shows the detected pillar and its bounding box, the contour area used as a distance estimate, the LEFT / CENTER / RIGHT zones and the EDGE lines, and the state the navigation code is in — steering angle, current yaw against target heading, obstacle count, last turn direction and whether the next corner turn is allowed or blocked.</i></p>
+
+That overlay is not decoration. It is recorded for every run, and it is how we work out afterwards what the car was thinking, instead of guessing from the outside. `Data Age: 0.03s` in the corner is the staleness check from [Failure Handling](#failure-handling) reporting that the sensor data behind that decision was 30 ms old.
+
 **Deciding where to go.** The WRO rule is that red pillars are passed on the right and green on the left, so colour decides the direction. Distance decides the urgency: a pillar's apparent area tells us roughly how close it is, and the steering angle is scaled from about 10 degrees for a distant pillar up to 60 degrees for one that is nearly on top of us. Where the pillar sits in the frame adjusts that slightly, with a pillar dead ahead getting a firmer push than one already drifting off to the correct side. A pillar right at the edge of the frame is ignored, because the vehicle is already going to miss it and steering again would only throw the line away.
 
 With no pillars in sight the vehicle goes back to holding its heading off the IMU, exactly like the open round does.
@@ -331,3 +591,59 @@ Each round keeps its bring-up tools in a `testing_calibration_codes/` folder, be
 - **`Full_Bot_Sensor_and_Motor_Test.ino`** (open round) sweeps the servo, cycles the drive motor and prints every sensor, so a wiring mistake shows up in seconds.
 - **`rx_tx_test.ino`** (obstacle round) is a serial echo test that proves the Pi and the ESP32 can talk before any driving logic is involved.
 - **`hsv_tuner.py`** (obstacle round) shows the camera feed, the detection mask and the filtered result side by side with live sliders for the HSV bounds. The WRO rules point out that real field colours differ from the printed specification, and teams get practice time at the venue for exactly this reason, so being able to re-tune the thresholds in a couple of minutes is worth far more than any value we could hard-code at home.
+
+---
+
+## Vehicle Photos
+
+Photos of the finished vehicle from every side are in [`v-photos/`](./v-photos/), with a description of what to look for in each one.
+
+<p align="center">
+  <img src="./v-photos/vehicle_top.png" width="330" alt="Top view">
+  <img src="./v-photos/vehicle_rear.png" width="345" alt="Rear view">
+</p>
+
+---
+
+## Demonstration Videos
+
+Driving test footage is linked from [`video/README.md`](./video/README.md).
+
+- **[First Open Round Testing Run](https://www.youtube.com/watch?v=eD4r7zBw4Pc)** — ultrasonic wall centring, IMU-held straights, 90° corner turns and lap counting all running together on the practice track.
+- **Obstacle Round Testing Run** — not yet available. We are still troubleshooting and will add the footage once the vehicle completes a clean run.
+
+---
+
+## Resources and Acknowledgements
+
+The references, tools and documentation we actually leaned on while building this car.
+
+**Mechanical**
+
+- [Ackermann steering geometry — Wikipedia](https://en.wikipedia.org/wiki/Ackermann_steering_geometry) — the geometry our front axle is built on, and where we went to understand why the inside wheel has to turn further than the outside one.
+- [Ackermann turning diagram](https://commons.wikimedia.org/wiki/File:Ackermann_turning.svg) by Andy Dingley, after Bromskloss, via Wikimedia Commons, used under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Cropped for this README.
+
+**Computer vision, colour detection and HSV tuning**
+
+- [OpenCV — Changing Colorspaces](https://docs.opencv.org/4.x/df/d9d/tutorial_py_colorspaces.html) — converting BGR to HSV and tracking a coloured object with `cv.inRange()`. This is the basis of our pillar detection.
+- [OpenCV — Thresholding Operations using inRange](https://docs.opencv.org/4.x/da/d97/tutorial_threshold_inRange.html) — HSV thresholding with trackbars for live tuning of the bounds. Our `hsv_tuner.py` is built on this pattern.
+- [OpenCV — Contour Features](https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html) — contour area and bounding boxes, which is how we size a pillar and estimate how close it is.
+- [Adafruit Learning System — Raspberry Pi computer vision with OpenCV](https://learn.adafruit.com/raspberry-pi-face-recognition-treasure-box/software) — getting OpenCV installed and running against a Pi camera in the first place.
+- [Picamera2 library manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf) — the official manual for capturing frames from the Camera Module 3.
+
+**Electronics and firmware**
+
+- [Adafruit BNO055 Absolute Orientation Sensor](https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor) — the sensor guide behind the IMU library we use, including what NDOF fusion mode actually gives you.
+- [Adafruit BNO055 Arduino library](https://github.com/adafruit/Adafruit_BNO055) — the library itself.
+- [ESP32Servo library](https://github.com/madhephaestus/ESP32Servo) — servo PWM on the ESP32, since the standard Arduino `Servo` library does not work there.
+- [ESP32 Arduino core (Espressif)](https://github.com/espressif/arduino-esp32) — the board package that makes the ESP32 programmable from the Arduino IDE.
+- [KiCad documentation](https://docs.kicad.org/) — used to draw the schematics in [`schemes/`](./schemes/).
+
+**Competition**
+
+- [World Robot Olympiad Association](https://wro-association.org/) — the rules and season materials for Future Engineers.
+- [WRO Future Engineers 2024 team repositories](https://github.com/World-Robot-Olympiad-Association/fe-2024-links) — the official index of past teams' repositories. Reading how previous teams documented their vehicles shaped how we documented ours.
+
+**Thanks**
+
+To our mentors and our schools, The International School Bangalore and National Public School Koramangala, for the workshop time and the support; and to the open source communities behind OpenCV, the Arduino and ESP32 ecosystems, Adafruit and KiCad, all of whose freely published work and documentation this vehicle is built on top of.

@@ -233,35 +233,37 @@ The five designs went from a plain sleeve, through versions with thicker walls a
 
 ### Power Supply
 
-The vehicle runs on **three 18650 Li-ion cells in series**, which gives about 11.1 V nominal, or around 12.6 V when they are fully charged.
+There are **two battery packs** on this car, and each one has its own switch.
 
-That pack feeds a power distribution board, which is what lets one battery pack run everything safely. The board splits the supply into two kinds of output: a regulated 5 V branch and a branch carrying the raw pack voltage.
+**The main pack** is three 18650 Li-ion cells in series, about 11.1 V nominal and around 12.6 V fully charged. It feeds a power distribution board, which splits the supply into a regulated 5 V branch and a branch carrying the raw pack voltage. The 5 V branch runs the ESP32, the three ultrasonic sensors and — in the obstacle round — the Raspberry Pi. The raw pack voltage goes to the L298N, which is the only part that wants the higher voltage.
 
-The 5 V branch runs the ESP32, the sensors and the Raspberry Pi. The raw pack voltage goes to the motor driver, which is the only part that wants the higher voltage. The **steering servo has its own separate supply** rather than sharing the logic rail, because a servo under load pulls a sharp current spike at exactly the moment the car is turning, and a voltage dip at that moment would reset the very controller that is steering.
+**The servo pack** is two cells in series, 7.4 V, and it powers the steering servo and nothing else. This is deliberate. A servo under load pulls a sharp current spike at exactly the moment the car is turning, and if it shared the logic rail that dip would land on the controller that is doing the steering. Giving it its own pack means the worst it can do is brown out itself.
 
 One thing worth knowing if you rebuild this: the Raspberry Pi 5 is fussy about its 5 V supply. If the current available drops it will reboot in the middle of a run, which is very hard to diagnose if you assume it is a software problem.
 
 ```mermaid
 flowchart LR
-    BAT[3x 18650 Li-ion cells<br/>11.1V nominal] --> SW[Main power switch]
-    SW --> PDB[Power Distribution Board]
+    BAT[Main pack<br/>3x 18650 Li-ion, 11.1V] --> SW3[12V power switch]
+    SW3 --> PDB[Power Distribution Board<br/>12V to 5V]
 
     PDB -->|raw pack voltage| L298[L298N Motor Driver]
     L298 --> MOT[BO DC Drive Motors]
 
     PDB -->|regulated 5V| ESP[ESP32]
+    PDB -->|regulated 5V| SENS[3x HC-SR04]
     PDB -->|regulated 5V| PI[Raspberry Pi 5<br/>obstacle round only]
 
-    SRVBAT[Separate servo supply] --> SRV[MG669R Steering Servo]
+    SBAT[Servo pack<br/>2 cells, 7.4V] --> SW2[7.4V power switch]
+    SW2 --> SRV[MG669R Steering Servo]
 ```
 
 ### Switches and Starting a Run
 
-There are two switches on the car, and they do deliberately different jobs.
+Nothing on this car is started by plugging in a battery. Power and go are two separate actions, done by two different kinds of switch.
 
-**The rocker switch turns the vehicle on.** It sits between the battery pack and the power distribution board, so it is a true master switch: everything downstream of it — controllers, sensors, motor driver — is dead until it is flipped. It is mounted where it can be reached without lifting the car, because the one thing you always need in a hurry is the off switch.
+**The rocker switches turn the vehicle on.** Each battery pack has its own SPST switch — `SW3` on the 12 V main pack and `SW2` on the 7.4 V servo pack — so each is a true master switch for everything downstream of it. Splitting them also means the steering can be killed on its own, which is genuinely useful on the bench: you can power the logic and read every sensor with no chance of the servo suddenly moving under your hands. They are mounted where they can be reached without lifting the car, because the one thing you always need in a hurry is the off switch.
 
-**The push button starts the run.** It is wired to the ESP32 with an internal pull-up and pulls the pin to ground when pressed. Powering the car on does nothing except boot it: the code initialises, centres the servo, starts the IMU, zeroes the heading, and then sits and waits. Nothing moves until the button is pressed.
+**The push button starts the run.** `SW1` is a momentary button wired to the ESP32 with an internal pull-up, pulling the pin to ground when pressed. Powering the car on does nothing except boot it: the code initialises, centres the servo, starts the IMU, zeroes the heading, and then sits and waits. Nothing moves until the button is pressed.
 
 Splitting these two jobs matters. It means the car can be switched on, placed on the mat, checked, and lined up while it is fully powered and completely still. If power-on also meant go, every one of those steps would be a race.
 
@@ -331,10 +333,21 @@ Two things about the mounting matter. The **wide lens** lets the car see pillars
 
 ### Schematics
 
-One schematic per round, in [`schemes/`](./schemes/), drawn in KiCad 9.0.1. The obstacle round circuit is electrically identical to the open round one — the only hardware addition is the camera, which connects through the Pi's CSI ribbon connector and so does not appear as GPIO wiring.
+One schematic per round, in [`schemes/`](./schemes/), drawn in KiCad 10.0.4. Both are in the repository as a PNG for viewing here and as a PDF for printing or zooming in on a detail.
 
-- [`schemes/open_round/schematic.png`](./schemes/open_round/schematic.png)
-- [`schemes/obstacle_round/schematic.png`](./schemes/obstacle_round/schematic.png)
+**Open Round** — everything hangs off the ESP32, because it is the only controller in this round.
+
+<p align="center">
+  <a href="./schemes/open_round/schematic.pdf"><img src="./schemes/open_round/schematic.png" width="860" alt="Open round schematic"></a>
+</p>
+
+**Obstacle Round** — the same circuit with the Raspberry Pi added. The Pi takes its 5V from the same distribution board and talks to the ESP32 over serial. The camera is not on the sheet because it is a CSI ribbon connection rather than GPIO wiring.
+
+<p align="center">
+  <a href="./schemes/obstacle_round/schematic.pdf"><img src="./schemes/obstacle_round/schematic.png" width="860" alt="Obstacle round schematic"></a>
+</p>
+
+<p align="center"><i>Click either schematic for the full-resolution PDF.</i></p>
 
 ### Components List
 
@@ -351,8 +364,9 @@ Before building anything, we decided on our hardware requirements and our bill o
 | **BNO055 IMU** | A 9-axis absolute orientation sensor. It gives us a real heading rather than a raw gyro rate, so the vehicle can hold a straight line and know when it has actually completed a 90 degree turn. |
 | **L298N Motor Driver** | Takes the low power signals from the ESP32 and switches the current the drive motors need, in both directions. |
 | **Power Distribution Board** | Splits the battery power into separate branches, so the electronics get a regulated 5V supply and the motor gets the raw pack voltage. |
-| **Li-ion Cells (×3)** | Three 18650 cells in series power the whole vehicle, at about 11.1V nominal. |
-| **Rocker Switch** | Master power switch between the battery pack and the distribution board. |
+| **Li-ion Cells (×3)** | The main pack. Three 18650 cells in series power the whole vehicle, at about 11.1V nominal. |
+| **Li-ion Cells (×2)** | The servo pack. Two cells in series, 7.4V, powering the steering servo and nothing else. |
+| **SPST Switches (×2)** | One master power switch per battery pack. |
 | **Push Button** | Start button, read by the ESP32. |
 | **Funduino Wheels (×4)** | Rubber tyre on a plastic rim. |
 

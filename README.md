@@ -30,13 +30,19 @@ This is the whole story of our car: what we built, why we built it that way, wha
    - [Camera](#camera)
    - [Schematics](#schematics)
    - [Components List](#components-list)
-7. [Engineering Trade-offs](#engineering-trade-offs)
+7. [Competition Constraints](#competition-constraints)
+8. [Engineering Trade-offs](#engineering-trade-offs)
    - [Ackermann Steering vs. Differential Steering](#ackermann-steering-vs-differential-steering)
    - [Funduino Wheels](#funduino-wheels)
    - [Ultrasonic Sensor Placement](#ultrasonic-sensor-placement)
+   - [100 RPM vs. a Faster Drive Motor](#100-rpm-vs-a-faster-drive-motor)
+   - [PLA vs. PETG for the Drive Shafts](#pla-vs-petg-for-the-drive-shafts)
    - [Li-ion Cells vs. a LiPo Pack](#li-ion-cells-vs-a-lipo-pack)
+   - [One Battery Domain vs. Two](#one-battery-domain-vs-two)
+   - [Vision Only vs. Vision Plus Ultrasonics and IMU](#vision-only-vs-vision-plus-ultrasonics-and-imu)
+   - [1080p vs. 640x480 Vision Pipeline](#1080p-vs-640x480-vision-pipeline)
    - [Two Controllers vs. One](#two-controllers-vs-one)
-8. [Software](#software)
+9. [Software](#software)
    - [Software Building Blocks](#software-building-blocks)
    - [Development Environment](#development-environment)
    - [Programming Languages](#programming-languages)
@@ -46,9 +52,9 @@ This is the whole story of our car: what we built, why we built it that way, wha
    - [Failure Handling](#failure-handling)
    - [Getting the Code Running](#getting-the-code-running)
    - [Tuning and Testing Tools](#tuning-and-testing-tools)
-9. [Vehicle Photos](#vehicle-photos)
-10. [Demonstration Videos](#demonstration-videos)
-11. [Resources and Acknowledgements](#resources-and-acknowledgements)
+10. [Vehicle Photos](#vehicle-photos)
+11. [Demonstration Videos](#demonstration-videos)
+12. [Resources and Acknowledgements](#resources-and-acknowledgements)
 
 ---
 
@@ -165,7 +171,7 @@ Everything below bolts onto the two decks. Build the lower deck completely befor
 
 Rear wheel drive from a **single dual-shaft 100 RPM BO DC gear motor**, running off the 12 V rail and clamped into the printed holder at the back of the lower deck. A shaft comes out of each side of the motor body, so one motor drives both rear wheels through the printed couplers and carbon fibre rods. Power goes through the L298N driver, which takes the low-power direction signals from the ESP32 and switches the current the motor actually needs, in both directions.
 
-**Why 100 RPM and not something faster.** A quicker motor makes a faster lap and a worse robot. Speed is bounded by how fast the car can *see*, not by how fast it can move: at 30 frames per second, a vehicle doing 1.2 m/s covers 3 cm between frames, so a pillar spotted at 30 cm gives the vision pipeline about seven frames to detect it, decide and steer. At 100 RPM the car does roughly 0.4 m/s, which turns those seven frames into more than twenty. We tried it the fast way first; the slower motor is what took obstacle avoidance from failing regularly to succeeding in 86% of test laps.
+We run it at about **0.4 m/s**. That is a deliberate ceiling rather than the motor's limit, and the reasoning — along with what happened when we tried a faster one — is under [100 RPM vs. a Faster Drive Motor](#100-rpm-vs-a-faster-drive-motor).
 
 <p align="center">
   <img src="./models/renders/drive_motor_holder.png" width="240" alt="Drive motor holder">
@@ -245,6 +251,18 @@ There are **two battery packs** on this car, and each one has its own switch.
 **The main pack** is three 18650 Li-ion cells in series, about 11.1 V nominal and around 12.6 V fully charged. It feeds a power distribution board, which splits the supply into a regulated 5 V branch and a branch carrying the raw pack voltage. The 5 V branch runs the ESP32, the three ultrasonic sensors and — in the obstacle round — the Raspberry Pi. The raw pack voltage goes to the L298N, which is the only part that wants the higher voltage.
 
 **The servo pack** is two cells in series, 7.4 V, and it powers the steering servo and nothing else. This is deliberate. A servo under load pulls a sharp current spike at exactly the moment the car is turning, and if it shared the logic rail that dip would land on the controller that is doing the steering. Giving it its own pack means the worst it can do is brown out itself.
+
+**Power budget.** Both packs are 2200 mAh, and both are heavily oversized for a three minute round — deliberately, because a battery that is nearly flat behaves differently from a battery that is half full, and we did not want the last lap of a run to be driven by a different car than the first.
+
+| | Main pack (3S, 11.1 V) | Servo pack (2S, 7.4 V) |
+|:--|:--|:--|
+| Continuous current | 1.25 A | 0.5 A |
+| Continuous power | 13.88 W | 3.7 W |
+| Peak current | 3.85 A | 2.5 A |
+| Peak power | 42.74 W | 18.5 W |
+| Theoretical runtime | 105 min | 264 min |
+| Safe runtime, 80% of capacity | **84 min** | **211 min** |
+| Competition round | 3 min | 3 min |
 
 One thing worth knowing if you rebuild this: the Raspberry Pi 5 is fussy about its 5 V supply. If the current available drops it will reboot in the middle of a run, which is very hard to diagnose if you assume it is a software problem.
 
@@ -394,6 +412,25 @@ In this round the ESP32 becomes the slave controller: it only reads the sensors 
 
 ---
 
+## Competition Constraints
+
+The rules set hard limits, and it is worth writing down how close we actually are to each one, because "it fits" and "it fits with 15 mm to spare" are different engineering positions.
+
+| Constraint | Rule limit | Our vehicle | Margin |
+|:-----------|:-----------|:------------|:-------|
+| Length | 300 mm | 285 mm | 15 mm |
+| Width | 200 mm | 185 mm | 15 mm |
+| Height | 300 mm | 165 mm | 135 mm |
+| Weight | 1500 g | 1180 g | 320 g |
+| Steering | Must be front-wheel Ackermann | Single 15 kg servo, dual-arm linkage | Compliant |
+| Drive | Must be rear-wheel; differential and omnidirectional drive forbidden | One dual-shaft motor driving both rear wheels through carbon fibre rods | Compliant, no differential |
+
+The two tight numbers are length and width, and they are why the vehicle has two decks at all. The base is a large off-the-shelf metal frame, and laying every component out on one level would have pushed us past 200 mm wide. Moving the Raspberry Pi, the camera mount and the distribution board onto a second deck spends height, where we have 135 mm to give away, to buy back width, where we have 15 mm.
+
+Avoiding a differential is a rules constraint that turned into a mechanical one: a single dual-shaft motor with a rigid rod to each rear wheel is the simplest legal way to drive both wheels, and it is why the [drive shaft coupler](#3d-printed-parts) matters as much as it does.
+
+---
+
 ## Engineering Trade-offs
 
 Every one of these is a choice where the option we did not take was a genuinely reasonable option. This section is what we gave up, not just what we gained.
@@ -435,6 +472,38 @@ Covered in full under [Wheels](#wheels) above. The short version: we traded grip
 
 *What they cannot do.* The HC-SR04 has a wide beam and no idea what it is looking at, so in the obstacle round it will happily report a traffic-sign pillar as a wall. This is precisely why pillar decisions come from the camera and the ultrasonics are only ever trusted about walls.
 
+### 100 RPM vs. a Faster Drive Motor
+
+We started on a 60 RPM motor, found it too slow for competitive lap times, and went up — but not as far as we could have.
+
+**The argument for stopping at 100 RPM is that speed is bounded by how fast the car can see, not by how fast it can move.** At 30 frames per second, a vehicle doing 1.2 m/s (a 300 RPM motor) travels 3 cm between frames, so a pillar first detected at 30 cm gives the vision pipeline about **7 frames — roughly 250 ms** — to detect it, classify it, decide a side and start steering. That was not enough, and it showed up as pillar collisions.
+
+At 100 RPM the car does about **0.4 m/s**, or 1.33 cm per frame, which turns the same 30 cm of warning into **more than 22 frames, about 750 ms**. Obstacle avoidance success went from **40% to 86% across 50 test laps**.
+
+| | 60 RPM | 100 RPM (final) | 300 RPM |
+|:--|:--|:--|:--|
+| Speed | too slow to be competitive | ~0.4 m/s | 1.2 m/s |
+| Distance per frame at 30 FPS | — | 1.33 cm | 3 cm |
+| Frames to react to a pillar at 30 cm | — | 22+ | ~7 |
+| Obstacle avoidance success | — | **86%** | 40% |
+
+The cost is straightforward: our lap times are slower than they could be. We took that deliberately, and it is a cheap thing to change later — a higher RPM motor is a drop-in replacement, so speed is available to us as soon as the perception side can keep up with it.
+
+### PLA vs. PETG for the Drive Shafts
+
+Our first drive shaft couplers were printed in PLA, because that is what everyone prints in. They lasted **8 to 12 hard acceleration cycles** before cracking along the layer lines.
+
+That failure mode is not really about strength, it is about ductility. PLA is rigid, and a rigid part under repeated torsional shock does not stretch and recover — it splits where the layers bond, which is the weakest direction in any printed part and unfortunately the exact direction the torque loads it.
+
+Reprinting in **PETG at 100% infill** took the same part past **100 cycles without failure**. Same geometry, same printer, different filament: the only change was picking a material that gives a little instead of cracking.
+
+| | PLA | PETG, 100% infill |
+|:--|:--|:--|
+| Cycles before failure | 8–12 | 100+ |
+| Failure mode | Split along layer lines | None observed |
+
+The costs are real but small: PETG is slower to print, stringier, and needs a hotter nozzle. For a part that carries every newton-metre the car produces, that is not a difficult trade.
+
 ### Li-ion Cells vs. a LiPo Pack
 
 The full reasoning is in [`docs/Decisions.md`](./docs/Decisions.md). In short:
@@ -446,9 +515,54 @@ The full reasoning is in [`docs/Decisions.md`](./docs/Decisions.md). In short:
 | **Easier to live with.** They are simpler to charge and safer to store between build sessions — a LiPo is not something we wanted sitting in a school bag between meetings. | **More connections.** A holder with individual cells has more contact points than a single pack, and contacts are where intermittent faults hide. |
 | **Tidier electronics.** With a fixed cell holder and a distribution board, the wiring has a fixed layout instead of being rearranged every time the battery is swapped. | |
 
+### One Battery Domain vs. Two
+
+This one we got wrong first and fixed with data.
+
+**Version 1 ran everything from a single 3S pack through buck converters.** On the bench it looked fine. Under load it crashed — and specifically it crashed *while steering*, which is the worst possible moment. The steering servo pulls a sharp transient when it swings under load, that transient dragged the shared rail down, and the Raspberry Pi 5 brown-out threshold is **4.75 V**, which does not leave much room below a nominal 5 V.
+
+**Version 2 splits the electrical system into two isolated domains:** a 3S 11.1 V 2200 mAh pack for the controllers, sensors and drive motor, and a separate 2S 7.4 V 2200 mAh pack for the steering servo alone.
+
+| | Single domain (V1) | Dual domain (V2) |
+|:--|:--|:--|
+| Logic rail under steering load | Sagging, brownouts | Stable at **5.02 V** |
+| Crashes across 100+ stress cycles | Repeated | **0** |
+
+What it costs: a second pack to charge, a second switch to remember, and about 100 g of vehicle weight. Against a failure that ends a run, that is not a close call.
+
+### Vision Only vs. Vision Plus Ultrasonics and IMU
+
+The obvious way to build this car is to do everything with the camera, since the camera is the only sensor that can tell a red pillar from a green one. We tried that, and it fails on walls rather than on pillars.
+
+**A purely vision-based edge-tracking approach misread the wall boundary in 32% of recorded frames** under varying light, because glare and floor reflections look exactly like an edge to a threshold. Nearly a third of frames giving a wrong answer about where the wall is makes wall following unusable.
+
+Adding **three HC-SR04 ultrasonics and the BNO055 IMU** fixed it, because those sensors do not care about light at all. Ultrasound measures distance by timing an echo, and the IMU measures orientation, so neither has any opinion about glare. Alignment accuracy went to **100% across lighting from 200 lux to 800 lux**.
+
+So the division of labour is not arbitrary: **the camera answers questions about colour and identity, the ultrasonics and IMU answer questions about geometry**, and neither is asked to do the other's job. The cost is three more sensors, more wiring, and a fusion problem to solve in software.
+
+### 1080p vs. 640x480 Vision Pipeline
+
+At 30 frames per second the pipeline has **33.33 ms** to finish with a frame before the next one arrives. Miss that and you are not merely slow, you are dropping frames and making decisions on stale pictures.
+
+| Resolution | Processing time per frame | Fits in the 33.33 ms budget? |
+|:--|:--|:--|
+| Full HD | 58 ms | No — dropped frames, lag, thermal throttling |
+| **640 × 480** | **12 ms** | Yes, with 21 ms to spare |
+
+Downscaling to 640 × 480 cut processing to about a third of the frame budget and stopped the Pi from thermally throttling itself. What we gave up is resolution on distant pillars — but a pillar too small to resolve at 640 × 480 is also too far away to be worth steering for yet, so in practice the resolution we lost was resolution we were not using.
+
 ### Two Controllers vs. One
 
-Running the whole obstacle round on the Raspberry Pi alone would have been simpler to write. We split it because the two jobs have incompatible timing requirements: reading an ultrasonic echo and holding a servo pulse need microsecond consistency, and a general purpose operating system running a camera and OpenCV cannot promise that. The ESP32 does the parts that must happen on time, the Pi does the parts that must happen intelligently.
+Running the whole obstacle round on the Raspberry Pi alone would have been simpler to write, and Version 1 of this vehicle did exactly that on a Raspberry Pi 3B+. We split it because the two jobs have incompatible timing requirements: reading an ultrasonic echo and holding a servo pulse need microsecond consistency, and a general purpose operating system running a camera and OpenCV cannot promise that.
+
+The failure is measurable rather than theoretical. **With vision and control on one processor, heavy vision load (85–95% CPU) dragged the low-level control loop from its target 100 Hz down to an inconsistent 45 Hz** — and an inconsistent loop rate is worse than a slow one, because the steering correction assumes it is being applied at a known interval. What it looked like from the outside was delayed steering and overshooting the wall.
+
+| | Single Pi (V1) | Pi 5 + ESP32 (V2) |
+|:--|:--|:--|
+| Control loop rate | 45 Hz, inconsistent | **100 Hz, deterministic** |
+| Behaviour under vision load | Delayed steering, wall overshoot | Unaffected |
+
+Splitting the work means the ESP32's loop rate does not depend on what the Pi is doing, because the Pi is not doing anything on the ESP32's processor. The ESP32 does the parts that must happen on time, the Pi does the parts that must happen intelligently.
 
 The cost is that we now have a link between them that can fail, which is why both sides have a timeout (see [Failure Handling](#failure-handling)).
 
@@ -590,6 +704,8 @@ Most of what went wrong during testing was not the vehicle making a bad decision
 - **The ESP32 watchdog.** If no command arrives for 500 ms, the ESP32 stops the motor and straightens the wheels on its own. A loose USB cable or a crashed program now means a stopped vehicle instead of one that keeps driving on its last instruction.
 - **The stale data check.** If the sensor or IMU readings on the Pi are more than a second old, the Pi commands a stop rather than steering off numbers that may no longer describe reality.
 - **Phase timeouts.** Every stage of a turn and of the parking sequence has a time limit, so a manoeuvre that never completes gives up instead of running forever.
+- **Stall detection.** Driving into a wall and staying there is how you burn out an L298N. If the motor is commanded above 50% duty while the IMU reports an acceleration delta under 0.05 m/s² for more than 1.5 seconds, the car concludes it is pushing against something immovable and cuts motor power. This keeps the driver chip below 55 °C even in the worst case.
+- **Packet validation.** Serial frames carry a `0xAA` header and a modulo-256 checksum of the data bytes. A frame whose checksum does not match is dropped rather than acted on, which keeps a corrupted packet from being read as a steering command. Round-trip latency stays under 2 ms.
 
 Every run also writes a timestamped log file and records an annotated video showing the detected pillars, the steering angle and the internal state, which is how we worked out what the vehicle was thinking after a run rather than guessing from the outside.
 
@@ -631,10 +747,10 @@ Photos of the finished vehicle from every side are in [`v-photos/`](./v-photos/)
 
 ## Demonstration Videos
 
-Driving test footage is linked from [`video/README.md`](./video/README.md).
+Driving test footage is linked from [`video/README.md`](./video/README.md). One video per challenge, both showing the vehicle driving autonomously with nobody touching it.
 
-- **[First Open Round Testing Run](https://www.youtube.com/watch?v=eD4r7zBw4Pc)** — ultrasonic wall centring, IMU-held straights, 90° corner turns and lap counting all running together on the practice track.
-- **Obstacle Round Testing Run** — not yet available. We are still troubleshooting and will add the footage once the vehicle completes a clean run.
+- **[Open Challenge — Testing Run](https://www.youtube.com/watch?v=eD4r7zBw4Pc)** — ultrasonic wall centring, IMU-held straights, 90° corner turns and lap counting all running together on the practice track.
+- **[Obstacle Challenge — Testing Run](https://www.youtube.com/watch?v=VzUp-tTwaB4)** — the full vision pipeline driving the car: red and green pillars detected and passed on the correct side, corner turns gated on the frame being clear, and the IMU squaring the heading up after each turn.
 
 ---
 

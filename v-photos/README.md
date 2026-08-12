@@ -9,6 +9,7 @@ Photos of the finished **ERROR 404** vehicle from every side.
 | `vehicle_left_side.png` | Left side |
 | `vehicle_right_side.png` | Right side |
 | `vehicle_top.png` | Top |
+| `vehicle_bottom.png` | Bottom |
 
 ## What you can see in the photos
 
@@ -19,3 +20,5 @@ Photos of the finished **ERROR 404** vehicle from every side.
 **Top** — From above you can see the Raspberry Pi 5 in its case, the orange camera ribbon cable running forward to the camera, the 18650 Li-ion cells that power the vehicle, and the power switch.
 
 **Rear** — The rear view shows the battery holder and the rear wheel drive.
+
+**Bottom** — The underside shows the metal lower deck that everything is built on, and the drivetrain and steering that hang below it. You can see the rear axle rods running out from the drive motor to each rear wheel, the steering linkage across the front axle, and the brass standoffs at each corner that carry the wheel hubs. The flat underside is deliberate: nothing protrudes below the deck to catch on the mat.

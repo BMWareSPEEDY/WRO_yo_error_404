@@ -112,7 +112,7 @@ The short version of the process: decide what the car has to do, pick components
 | [`models/`](./models/) | The mechanical design files, as STL: the printed parts (drive shafts, motor holder, sensor mounts, camera mount) ready to go straight into a slicer, plus models of the two chassis decks. Rendered previews are in [`models/renders/`](./models/renders/). |
 | [`schemes/`](./schemes/) | The electrical schematics, one for each round, showing how every component is wired, plus the ESP32 pin mapping and the system block diagram. |
 | [`t-photos/`](./t-photos/) | Photos of the team, and our logo. |
-| [`v-photos/`](./v-photos/) | Photos of the finished vehicle from the front, the rear, both sides and the top. These are meant to be used as a construction reference, so you can see how components are actually positioned and routed rather than working from the schematic alone. |
+| [`v-photos/`](./v-photos/) | Photos of the finished vehicle from the front, the rear, both sides, the top and the bottom. These are meant to be used as a construction reference, so you can see how components are actually positioned and routed rather than working from the schematic alone. |
 | [`video/`](./video/) | Links to our driving test footage. |
 | [`docs/`](./docs/) | Engineering documentation: the full engineering journal, the decision log, the testing log and the images used in this README. |
 
@@ -736,11 +736,19 @@ Each round keeps its bring-up tools in a `testing_calibration_codes/` folder, be
 
 ## Vehicle Photos
 
-Photos of the finished vehicle from every side are in [`v-photos/`](./v-photos/), with a description of what to look for in each one.
+Photos of the finished vehicle from all four sides, the top and the bottom are in [`v-photos/`](./v-photos/), with a description of what to look for in each one.
 
 <p align="center">
   <img src="./v-photos/vehicle_top.png" width="330" alt="Top view">
-  <img src="./v-photos/vehicle_rear.png" width="345" alt="Rear view">
+  <img src="./v-photos/vehicle_bottom.png" width="337" alt="Bottom view">
+</p>
+
+<p align="center"><i>Top and bottom. From above: the Raspberry Pi 5, the cells and the camera ribbon running forward. From below: the metal lower deck, the rear axle rods out to each wheel, and the steering linkage across the front.</i></p>
+
+<p align="center">
+  <img src="./v-photos/vehicle_front.png" width="255" alt="Front view">
+  <img src="./v-photos/vehicle_rear.png" width="267" alt="Rear view">
+  <img src="./v-photos/vehicle_left_side.png" width="255" alt="Left side view">
 </p>
 
 ---

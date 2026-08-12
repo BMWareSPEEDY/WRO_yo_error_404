@@ -92,7 +92,7 @@ We kept two engineering documents while building the car, and they are the hones
 
 - **[`docs/Decisions.md`](./docs/Decisions.md)** — every significant choice we made, in the order we made it, with the reasoning behind it. A couple of them we got wrong the first time and had to change later, and we left those in.
 - **[`docs/Testing.md`](./docs/Testing.md)** — the testing log: what we tried, what broke, and what the fix was.
-- **[`docs/Engineering_Journal.docx`](./docs/Engineering_Journal.docx)** — the full engineering journal submitted for the competition, covering the whole design, build and testing process with the measurements and test data behind each decision.
+- **[`docs/Engineering_Journal.pdf`](./docs/Engineering_Journal.pdf)** — the full engineering journal submitted for the competition, covering the whole design, build and testing process with the measurements and test data behind each decision.
 
 The short version of the process: decide what the car has to do, pick components that each have one job, design the mechanical parts around those components, get every subsystem working on its own with a small test program, and only then put the full program on top. Most of the time we lost was lost when we skipped that last step and tried to debug the whole car at once.
 

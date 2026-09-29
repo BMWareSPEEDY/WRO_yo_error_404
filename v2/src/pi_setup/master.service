@@ -1,0 +1,26 @@
+[Unit]
+Description=WRO 2026 - Pi master, open round (~/obstacle_round/main.py)
+# dashboard.py owns the ESP32 port and relays for main.py, so it comes first.
+Wants=dashboard.service
+After=dashboard.service
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+SupplementaryGroups=dialout
+WorkingDirectory=/home/pi/obstacle_round
+# Keep only the 20 newest run CSVs so the SD card cannot fill up.
+ExecStartPre=/bin/bash -c "cd /home/pi/obstacle_round/logs 2>/dev/null && ls -t run_*.csv 2>/dev/null | tail -n +21 | xargs -r rm -f; true"
+ExecStart=/usr/bin/python3 -u /home/pi/obstacle_round/main.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=10
+KillSignal=SIGINT
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

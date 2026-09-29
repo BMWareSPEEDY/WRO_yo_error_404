@@ -1,0 +1,10 @@
+{
+  "pillar_trigger_dist_cm": 35,
+  "pillar_steer_left": 45,
+  "pillar_steer_right": 135,
+  "pillar_turn_out_time_s": 1.9,
+  "pillar_clear_time_s": 3.7,
+  "pillar_focal_px": 710,
+  "turn_hold_pct": 30,
+  "block_offset_sens": 0.8
+}
